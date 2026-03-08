@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "Bathyal Lens",
+  "version": "0.1.0",
+  "description": "See beneath the surface. Analyze AI-generated answers in real-time.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://www.google.com/*",
+    "https://www.perplexity.ai/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.google.com/search*",
+        "https://www.perplexity.ai/*"
+      ],
+      "js": [
+        "platforms/google.js",
+        "platforms/perplexity.js",
+        "content.js"
+      ],
+      "css": [
+        "bathyal-overlay.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/bathyal-16.png",
+      "48": "icons/bathyal-48.png",
+      "128": "icons/bathyal-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/bathyal-16.png",
+    "48": "icons/bathyal-48.png",
+    "128": "icons/bathyal-128.png"
+  }
+}

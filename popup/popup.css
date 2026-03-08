@@ -1,0 +1,262 @@
+/*
+ * Bathyal Lens — Popup Styles
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 340px;
+  background: #0a0e1a;
+  color: #c8d6e5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+}
+
+.popup-container {
+  padding: 16px;
+}
+
+/* Header */
+.popup-header {
+  text-align: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1e2a45;
+  margin-bottom: 14px;
+}
+
+.popup-logo {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e8f0f8;
+  letter-spacing: 2px;
+}
+
+.popup-tagline {
+  font-size: 11px;
+  color: #6b7c93;
+  margin-top: 2px;
+}
+
+/* Sections */
+.popup-section {
+  margin-bottom: 14px;
+}
+
+.popup-label {
+  display: block;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6b7c93;
+  margin-bottom: 6px;
+}
+
+.popup-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: #131a2e;
+  border: 1px solid #1e2a45;
+  border-radius: 6px;
+  color: #c8d6e5;
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  outline: none;
+}
+
+.popup-input:focus {
+  border-color: #00e5c7;
+}
+
+.popup-input::placeholder {
+  color: #4a5568;
+}
+
+.popup-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.popup-input-row .popup-input {
+  flex: 1;
+}
+
+.popup-hint {
+  font-size: 10px;
+  color: #4a5568;
+  margin-top: 4px;
+}
+
+.popup-hint-inline {
+  font-size: 10px;
+  color: #4a5568;
+}
+
+/* Buttons */
+.popup-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #00e5c7;
+  color: #0a0e1a;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  letter-spacing: 0.5px;
+}
+
+.popup-btn:hover {
+  background: #00cdb2;
+}
+
+.popup-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.popup-btn-small {
+  padding: 8px 12px;
+  background: #131a2e;
+  border: 1px solid #1e2a45;
+  border-radius: 6px;
+  color: #c8d6e5;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.popup-btn-small:hover {
+  background: #1a2340;
+}
+
+.popup-btn-secondary {
+  padding: 6px 12px;
+  background: #131a2e;
+  border: 1px solid #1e2a45;
+  border-radius: 6px;
+  color: #6b7c93;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.popup-btn-secondary:hover {
+  color: #c8d6e5;
+  border-color: #2a3555;
+}
+
+/* Status */
+.popup-status {
+  font-size: 11px;
+  margin-top: 6px;
+  min-height: 16px;
+}
+
+.popup-status-success { color: #2ed573; }
+.popup-status-error { color: #ff4757; }
+.popup-status-pending { color: #f5a623; }
+
+/* Radio group */
+.popup-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #c8d6e5;
+  cursor: pointer;
+}
+
+.popup-radio input {
+  accent-color: #00e5c7;
+}
+
+.popup-cost {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: #6b7c93;
+}
+
+/* Competitors */
+.popup-competitors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.popup-competitor-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #131a2e;
+  border: 1px solid #1e2a45;
+  border-radius: 6px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 11px;
+}
+
+.popup-btn-remove {
+  background: none;
+  border: none;
+  color: #6b7c93;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+
+.popup-btn-remove:hover {
+  color: #ff4757;
+}
+
+/* Divider */
+.popup-divider {
+  height: 1px;
+  background: #1e2a45;
+  margin: 14px 0;
+}
+
+/* Usage */
+.popup-usage {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #6b7c93;
+  margin-bottom: 10px;
+}
+
+.popup-usage strong {
+  color: #e8f0f8;
+}
+
+/* Actions */
+.popup-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Footer */
+.popup-footer {
+  text-align: center;
+  font-size: 10px;
+  color: #4a5568;
+  padding-top: 8px;
+  border-top: 1px solid #1e2a45;
+  font-family: "SF Mono", "Fira Code", monospace;
+}
