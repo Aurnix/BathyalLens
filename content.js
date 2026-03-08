@@ -1,21 +1,24 @@
 /**
  * Bathyal Lens — Content Script
- * Detects AI answers, extracts data, injects badge + overlay panel.
- * Platform modules (google.js, perplexity.js) load before this file
- * and attach to window.BathyalPlatforms.
+ * Detects AI answers, extracts data, triggers analysis.
+ * Platform modules (google.js, perplexity.js) and overlay modules
+ * (overlay/styles.js, overlay/components.js, overlay/panel.js)
+ * load before this file via manifest js array order.
+ *
+ * UI is rendered inside a closed Shadow DOM via window.BathyalOverlay.
  */
 
 (function () {
   "use strict";
+
+  const overlay = window.BathyalOverlay;
 
   // --- State ---
   let currentPlatform = null;
   let extractedData = null;
   let analysisResult = null;
   let isAnalyzing = false;
-  let panelVisible = false;
-  let badgeEl = null;
-  let panelEl = null;
+  let cachedConfig = null;
 
   // --- Platform detection ---
 
@@ -28,28 +31,28 @@
     return null;
   }
 
-  // --- Badge ---
+  // --- Config ---
 
-  function createBadge() {
-    if (badgeEl) return;
-
-    badgeEl = document.createElement("div");
-    badgeEl.id = "bathyal-lens-badge";
-    badgeEl.title = "Bathyal Lens — Click to analyze";
-    badgeEl.addEventListener("click", onBadgeClick);
-    document.body.appendChild(badgeEl);
+  async function loadConfig() {
+    const data = await chrome.storage.local.get("config");
+    cachedConfig = data.config || {};
+    return cachedConfig;
   }
 
-  function setBadgeState(state) {
-    if (!badgeEl) return;
-    badgeEl.className = "";
-    badgeEl.classList.add("bathyal-badge", `bathyal-badge--${state}`);
+  function isCompetitorDomain(domain) {
+    if (!cachedConfig?.competitors?.length) return false;
+    const clean = domain.replace(/^www\./, "").toLowerCase();
+    return cachedConfig.competitors.some(
+      (c) => clean === c || clean.endsWith("." + c)
+    );
   }
+
+  // --- Badge click ---
 
   function onBadgeClick() {
     if (isAnalyzing) return;
     if (analysisResult) {
-      togglePanel();
+      overlay.togglePanel();
       return;
     }
     if (extractedData) {
@@ -62,8 +65,8 @@
   function runAnalysis(data) {
     if (isAnalyzing) return;
     isAnalyzing = true;
-    setBadgeState("loading");
-    showPanel("loading");
+    overlay.setBadgeState("loading");
+    overlay.showPanel("loading");
 
     chrome.runtime.sendMessage({
       type: "ANALYZE_REQUEST",
@@ -78,26 +81,32 @@
       isAnalyzing = false;
       analysisResult = message.payload;
 
+      // Attach query/platform metadata for the panel's query bar
+      if (extractedData) {
+        analysisResult._query = extractedData.query;
+        analysisResult._platform = extractedData.platform;
+      }
+
       // Determine badge state based on own domain status
       if (analysisResult.own_domain_status?.cited) {
-        setBadgeState("success");
+        overlay.setBadgeState("success");
       } else if (
         analysisResult.explicit_citations?.some((c) =>
           isCompetitorDomain(c.domain)
         )
       ) {
-        setBadgeState("danger");
+        overlay.setBadgeState("danger");
       } else {
-        setBadgeState("detected");
+        overlay.setBadgeState("detected");
       }
 
-      showPanel("result", analysisResult);
+      overlay.showPanel("result", analysisResult, cachedConfig);
     }
 
     if (message.type === "ANALYZE_ERROR") {
       isAnalyzing = false;
-      setBadgeState("detected");
-      showPanel("error", message.error);
+      overlay.setBadgeState("detected");
+      overlay.showPanel("error", message.error);
     }
 
     if (message.type === "ANALYZE_SELECTION") {
@@ -113,231 +122,17 @@
     }
   });
 
-  let cachedConfig = null;
-  function isCompetitorDomain(domain) {
-    // Will be populated from config
-    return false;
-  }
-
-  async function loadConfig() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get("config", (data) => {
-        cachedConfig = data.config || {};
-        resolve(cachedConfig);
-      });
-    });
-  }
-
-  // --- Panel rendering ---
-
-  function showPanel(state, data) {
-    if (!panelEl) {
-      panelEl = document.createElement("div");
-      panelEl.id = "bathyal-lens-panel";
-      document.body.appendChild(panelEl);
-    }
-
-    panelEl.style.display = "block";
-    panelVisible = true;
-
-    if (state === "loading") {
-      panelEl.innerHTML = renderLoading();
-    } else if (state === "error") {
-      panelEl.innerHTML = renderError(data);
-    } else if (state === "result") {
-      panelEl.innerHTML = renderResult(data);
-    }
-  }
-
-  function togglePanel() {
-    if (!panelEl) return;
-    if (panelVisible) {
-      panelEl.style.display = "none";
-      panelVisible = false;
-    } else {
-      panelEl.style.display = "block";
-      panelVisible = true;
-    }
-  }
-
-  function hidePanel() {
-    if (panelEl) {
-      panelEl.style.display = "none";
-      panelVisible = false;
-    }
-  }
-
-  // --- Render functions ---
-
-  function renderLoading() {
-    return `
-      <div class="bathyal-panel-header">
-        <span class="bathyal-panel-title">BATHYAL LENS</span>
-        <div class="bathyal-panel-controls">
-          <button class="bathyal-btn-minimize" onclick="document.getElementById('bathyal-lens-panel').style.display='none'">−</button>
-        </div>
-      </div>
-      <div class="bathyal-panel-body" style="text-align:center; padding:40px 20px;">
-        <div class="bathyal-sonar">
-          <div class="bathyal-sonar-ring"></div>
-          <div class="bathyal-sonar-ring" style="animation-delay:0.5s"></div>
-          <div class="bathyal-sonar-ring" style="animation-delay:1.0s"></div>
-          <div class="bathyal-sonar-dot"></div>
-        </div>
-        <div class="bathyal-loading-text">ANALYZING</div>
-      </div>
-    `;
-  }
-
-  function renderError(error) {
-    return `
-      <div class="bathyal-panel-header">
-        <span class="bathyal-panel-title">BATHYAL LENS</span>
-        <div class="bathyal-panel-controls">
-          <button class="bathyal-btn-minimize" onclick="document.getElementById('bathyal-lens-panel').style.display='none'">×</button>
-        </div>
-      </div>
-      <div class="bathyal-panel-body">
-        <div class="bathyal-error">
-          <div class="bathyal-error-icon">⚠</div>
-          <div class="bathyal-error-text">${escapeHtml(error)}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  function renderResult(data) {
-    const d = data;
-
-    // Citation map
-    const maxCount = Math.max(...(d.explicit_citations || []).map((c) => c.count), 1);
-    const citationRows = (d.explicit_citations || [])
-      .map((c) => {
-        const pct = Math.round((c.count / maxCount) * 100);
-        return `
-        <div class="bathyal-citation-row">
-          <span class="bathyal-citation-domain">${escapeHtml(c.domain)}</span>
-          <div class="bathyal-citation-bar-bg">
-            <div class="bathyal-citation-bar" style="width:${pct}%"></div>
-          </div>
-          <span class="bathyal-citation-count">${c.count}×</span>
-          <span class="bathyal-citation-prominence bathyal-prominence-${c.prominence}">${c.prominence}</span>
-        </div>`;
-      })
-      .join("");
-
-    // Ghost sources
-    const ghostRows = (d.ghost_sources || [])
-      .map((g) => {
-        const pct = Math.round(g.confidence * 100);
-        return `
-        <div class="bathyal-ghost-item">
-          <div class="bathyal-ghost-header">
-            <span class="bathyal-ghost-icon">◐</span>
-            <span class="bathyal-ghost-domain">${escapeHtml(g.domain)}</span>
-            <span class="bathyal-ghost-confidence">${pct}%</span>
-          </div>
-          <div class="bathyal-ghost-evidence">${escapeHtml(g.evidence)}</div>
-          <div class="bathyal-confidence-bar-bg">
-            <div class="bathyal-confidence-bar" style="width:${pct}%"></div>
-          </div>
-        </div>`;
-      })
-      .join("");
-
-    // Citation DNA
-    const dnaRows = (d.citation_dna || [])
-      .map((dna) => {
-        return `
-        <div class="bathyal-dna-item">
-          <div class="bathyal-dna-header">
-            <span class="bathyal-dna-icon">✦</span>
-            <span class="bathyal-dna-pattern">${escapeHtml(dna.pattern.replace(/_/g, " "))}</span>
-            <span class="bathyal-dna-strength bathyal-strength-${dna.strength}">${dna.strength}</span>
-          </div>
-          <div class="bathyal-dna-desc">${escapeHtml(dna.description)}</div>
-        </div>`;
-      })
-      .join("");
-
-    // Own domain
-    const own = d.own_domain_status || {};
-    const ownStatus = own.cited ? "CITED" : own.ghost ? "GHOST" : "NOT CITED";
-    const ownClass = own.cited ? "success" : "danger";
-
-    // Stats
-    const stats = d.stats || {};
-
-    return `
-      <div class="bathyal-panel-header">
-        <span class="bathyal-panel-title">BATHYAL LENS</span>
-        <div class="bathyal-panel-controls">
-          <button class="bathyal-btn-minimize" onclick="document.getElementById('bathyal-lens-panel').style.display='none'">−</button>
-          <button class="bathyal-btn-close" onclick="document.getElementById('bathyal-lens-panel').style.display='none'">×</button>
-        </div>
-      </div>
-
-      <div class="bathyal-panel-body">
-        ${own.recommendation !== null ? `
-        <div class="bathyal-own-domain bathyal-own-${ownClass}">
-          <span class="bathyal-own-dot bathyal-own-dot-${ownClass}"></span>
-          <span class="bathyal-own-status">${ownStatus}</span>
-        </div>` : ""}
-
-        <div class="bathyal-section">
-          <div class="bathyal-section-title">CITATION MAP <span class="bathyal-section-count">${stats.unique_domains || 0}</span></div>
-          ${citationRows || '<div class="bathyal-empty">No citations found</div>'}
-        </div>
-
-        ${ghostRows ? `
-        <div class="bathyal-section">
-          <div class="bathyal-section-title">GHOST SOURCES <span class="bathyal-section-count bathyal-ghost-accent">${stats.ghost_count || 0}</span></div>
-          <div class="bathyal-ghost-desc">Content from these domains likely informed this answer but received no explicit citation.</div>
-          ${ghostRows}
-        </div>` : ""}
-
-        ${dnaRows ? `
-        <div class="bathyal-section">
-          <div class="bathyal-section-title">CITATION DNA <span class="bathyal-section-count bathyal-dna-accent">${(d.citation_dna || []).length}</span></div>
-          ${dnaRows}
-        </div>` : ""}
-
-        ${own.recommendation ? `
-        <div class="bathyal-section">
-          <div class="bathyal-section-title">RECOMMENDATION</div>
-          <div class="bathyal-recommendation">${escapeHtml(own.recommendation)}</div>
-        </div>` : ""}
-
-        <div class="bathyal-stats-bar">
-          <span><strong>${stats.total_citations || 0}</strong> Sources</span>
-          <span><strong>${stats.unique_domains || 0}</strong> Domains</span>
-          <span class="bathyal-ghost-accent"><strong>${stats.ghost_count || 0}</strong> Ghosts</span>
-          <span><strong>${stats.answer_word_count || 0}</strong> Words</span>
-        </div>
-
-        <div class="bathyal-debug-toggle">
-          <button onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">Toggle Raw JSON</button>
-          <pre class="bathyal-raw-json" style="display:none">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
-        </div>
-      </div>
-    `;
-  }
-
-  function escapeHtml(str) {
-    if (!str) return "";
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
   // --- MutationObserver for AI answer detection ---
 
-  function startObserver() {
+  async function startObserver() {
     currentPlatform = getPlatform();
     if (!currentPlatform) return;
 
-    createBadge();
-    setBadgeState("idle");
+    // Load config before anything else so isCompetitorDomain works on first check
+    await loadConfig();
+
+    overlay.createBadge(onBadgeClick);
+    overlay.setBadgeState("idle");
 
     let debounceTimer = null;
     const debounceMs = currentPlatform.debounceMs || 500;
@@ -363,7 +158,7 @@
     if (!container) return;
 
     extractedData = currentPlatform.extract(container);
-    setBadgeState("detected");
+    overlay.setBadgeState("detected");
 
     // Check activation mode
     const config = await loadConfig();

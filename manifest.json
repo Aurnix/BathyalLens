@@ -26,10 +26,10 @@
       "js": [
         "platforms/google.js",
         "platforms/perplexity.js",
+        "overlay/styles.js",
+        "overlay/components.js",
+        "overlay/panel.js",
         "content.js"
-      ],
-      "css": [
-        "bathyal-overlay.css"
       ],
       "run_at": "document_idle"
     }

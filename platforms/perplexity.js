@@ -42,7 +42,7 @@
     // Try citation selectors
     for (const sel of CITATION_SELECTORS) {
       try {
-        const links = document.querySelectorAll(sel);
+        const links = container.querySelectorAll(sel);
         for (const a of links) {
           const href = a.href;
           if (!href || href.includes("perplexity.ai")) continue;
