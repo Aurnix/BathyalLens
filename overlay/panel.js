@@ -90,14 +90,16 @@
   function hidePanel() {
     if (!panelEl) return;
 
-    // Slide-out animation
-    panelEl.classList.add("bathyal-panel--closing");
-    panelEl.addEventListener("animationend", () => {
-      if (panelEl) {
-        panelEl.style.display = "none";
-        panelEl.classList.remove("bathyal-panel--closing");
+    // Capture reference to avoid stale closure if showPanel() replaces panelEl mid-animation
+    const currentPanel = panelEl;
+    currentPanel.classList.add("bathyal-panel--closing");
+    currentPanel.addEventListener("animationend", () => {
+      // Only act if this is still the active panel
+      if (panelEl === currentPanel) {
+        currentPanel.style.display = "none";
+        currentPanel.classList.remove("bathyal-panel--closing");
+        panelVisible = false;
       }
-      panelVisible = false;
     }, { once: true });
   }
 

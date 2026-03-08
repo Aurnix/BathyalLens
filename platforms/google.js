@@ -22,7 +22,7 @@
     }
 
     // Heading-text fallback: look for element containing "AI Overview"
-    const headings = document.querySelectorAll("h2, h3, div[role='heading'], span");
+    const headings = document.querySelectorAll("h2, h3, div[role='heading']");
     for (const h of headings) {
       if (h.textContent.trim() === "AI Overview") {
         // Return the parent container that holds the actual answer content

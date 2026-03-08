@@ -6,7 +6,7 @@ const USAGE_KEY = "usage";
 
 const COST_PER_ANALYSIS = {
   "claude-haiku-4-5-20251001": 0.006,
-  "claude-sonnet-4-5-20241022": 0.018,
+  "claude-sonnet-4-5-20250514": 0.018,
 };
 
 function todayStr() {

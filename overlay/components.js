@@ -29,7 +29,7 @@ function el(tag, attrs, ...children) {
   return node;
 }
 
-function escapeText(str) {
+function safeStr(str) {
   if (!str) return "";
   return String(str);
 }
@@ -116,7 +116,7 @@ function renderError(error, onMinimize, onClose) {
     renderHeader(onMinimize, onClose),
     el("div", { class: "bathyal-error" },
       el("div", { class: "bathyal-error-icon" }, "\u26A0"),
-      el("div", { class: "bathyal-error-text" }, escapeText(error))
+      el("div", { class: "bathyal-error-text" }, safeStr(error))
     )
   );
   return panel;
@@ -227,7 +227,7 @@ function renderResult(data, config, onMinimize, onClose) {
   if (d._query) {
     panel.appendChild(el("div", { class: "bathyal-query-bar" },
       el("div", { class: "bathyal-query-platform" }, d._platform || "Analysis"),
-      el("div", { class: "bathyal-query-text" }, `\u201C${escapeText(d._query)}\u201D`)
+      el("div", { class: "bathyal-query-text" }, `\u201C${safeStr(d._query)}\u201D`)
     ));
   }
 
@@ -263,9 +263,13 @@ function renderResult(data, config, onMinimize, onClose) {
         const pct = Math.round((c.count / maxCount) * 100);
         const domainEl = el("span", {
           class: `bathyal-cite-domain${comp ? " bathyal-cite-domain--competitor" : ""}`
-        }, escapeText(c.domain));
+        }, safeStr(c.domain));
         domainEl.addEventListener("click", () => {
-          window.open(`https://${c.domain}`, "_blank");
+          const domain = c.domain.replace(/^https?:\/\//, "");
+          try {
+            const url = new URL(`https://${domain}`);
+            window.open(url.href, "_blank");
+          } catch {}
         });
 
         rows.appendChild(el("div", { class: "bathyal-cite-row" },
@@ -325,9 +329,9 @@ function renderResult(data, config, onMinimize, onClose) {
         content.appendChild(el("div", { class: "bathyal-ghost-card" },
           el("div", { class: "bathyal-ghost-header" },
             el("span", { class: "bathyal-ghost-icon" }, "\u25D0"),
-            el("span", { class: "bathyal-ghost-domain" }, escapeText(g.domain))
+            el("span", { class: "bathyal-ghost-domain" }, safeStr(g.domain))
           ),
-          el("div", { class: "bathyal-ghost-evidence" }, escapeText(g.evidence)),
+          el("div", { class: "bathyal-ghost-evidence" }, safeStr(g.evidence)),
           renderConfidence(g.confidence)
         ));
       }
@@ -348,12 +352,12 @@ function renderResult(data, config, onMinimize, onClose) {
         content.appendChild(el("div", { class: "bathyal-dna-card" },
           el("div", { class: "bathyal-dna-header" },
             el("span", { class: "bathyal-dna-icon" }, "\u2726"),
-            el("span", { class: "bathyal-dna-pattern" }, escapeText(item.pattern.replace(/_/g, " "))),
+            el("span", { class: "bathyal-dna-pattern" }, safeStr(item.pattern.replace(/_/g, " "))),
             el("span", {
               class: `bathyal-dna-strength bathyal-dna-strength--${item.strength}`
             }, item.strength)
           ),
-          el("div", { class: "bathyal-dna-desc" }, escapeText(item.description))
+          el("div", { class: "bathyal-dna-desc" }, safeStr(item.description))
         ));
       }
     }));
@@ -368,7 +372,7 @@ function renderResult(data, config, onMinimize, onClose) {
       staggerClass: "bathyal-stagger-4"
     }, (content) => {
       content.appendChild(el("div", { class: "bathyal-rec-card" },
-        el("div", { class: "bathyal-rec-text" }, escapeText(own.recommendation))
+        el("div", { class: "bathyal-rec-text" }, safeStr(own.recommendation))
       ));
     }));
   }
