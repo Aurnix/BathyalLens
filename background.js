@@ -100,21 +100,33 @@ Rules:
 async function callClaude(prompt, config) {
   const model = config.model || "claude-haiku-4-5-20251001";
 
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": config.apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-dangerous-direct-browser-access": "true",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      system: prompt.system,
-      messages: [{ role: "user", content: prompt.user }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+  let response;
+  try {
+    response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": config.apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        system: prompt.system,
+        messages: [{ role: "user", content: prompt.user }],
+      }),
+    });
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") throw new Error("API request timed out after 60 seconds.");
+    throw err;
+  }
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
     const status = response.status;
@@ -154,8 +166,9 @@ async function handleAnalyzeRequest(payload, sender) {
   }
 
   try {
-    // Check cache — key includes config-relevant fields so config changes invalidate
-    const cacheInput = payload.answer_text + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join(",");
+    // Check cache — key includes all fields that affect analysis output
+    const model = config.model || "claude-haiku-4-5-20251001";
+    const cacheInput = payload.answer_text + "\0" + (payload.query || "") + "\0" + (payload.platform || "") + "\0" + model + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join("\0");
     const cacheKey = await getCacheKey(cacheInput);
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -167,10 +180,15 @@ async function handleAnalyzeRequest(payload, sender) {
     let responseText = await callClaude(prompt, config);
     let result = parseAnalysisJSON(responseText);
 
+    // Track usage for first call
+    await trackUsage(model);
+
     // Retry once on parse failure
     if (!result) {
       responseText = await callClaude(prompt, config);
       result = parseAnalysisJSON(responseText);
+      // Track usage for retry call too
+      await trackUsage(model);
     }
 
     if (!result) {
@@ -180,10 +198,8 @@ async function handleAnalyzeRequest(payload, sender) {
       };
     }
 
-    // Cache and track
+    // Cache result
     await cacheSet(cacheKey, result, payload.platform, payload.query);
-    const model = config.model || "claude-haiku-4-5-20251001";
-    await trackUsage(model);
 
     return { type: "ANALYZE_RESULT", payload: result, cached: false };
   } catch (err) {

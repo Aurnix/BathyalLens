@@ -29,11 +29,11 @@ async function loadConfig() {
     ownDomainInput.value = config.ownDomain;
   }
   if (config.model) {
-    const radio = document.querySelector(`input[name="model"][value="${config.model}"]`);
+    const radio = [...document.querySelectorAll('input[name="model"]')].find(r => r.value === config.model);
     if (radio) radio.checked = true;
   }
   if (config.activationMode) {
-    const radio = document.querySelector(`input[name="activation"][value="${config.activationMode}"]`);
+    const radio = [...document.querySelectorAll('input[name="activation"]')].find(r => r.value === config.activationMode);
     if (radio) radio.checked = true;
   }
 
@@ -86,9 +86,7 @@ saveKeyBtn.addEventListener("click", async () => {
       showStatus("API key rejected. Check your key.", "error");
     }
   } catch (err) {
-    showStatus("Validation failed. Save anyway?", "error");
-    config.apiKey = key;
-    await saveConfig();
+    showStatus("Validation failed. Key not saved — check network and retry.", "error");
   }
 
   saveKeyBtn.disabled = false;
@@ -114,24 +112,27 @@ function cleanDomain(val) {
 
 function renderCompetitors() {
   const comps = config.competitors || [];
-  competitorsList.innerHTML = comps
-    .map(
-      (c, i) => `
-    <div class="popup-competitor-item">
-      <span>${c}</span>
-      <button class="popup-btn-remove" data-index="${i}">&times;</button>
-    </div>`
-    )
-    .join("");
+  competitorsList.textContent = "";
 
-  // Attach remove handlers
-  competitorsList.querySelectorAll(".popup-btn-remove").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const idx = parseInt(btn.dataset.index);
-      config.competitors.splice(idx, 1);
+  comps.forEach((c, i) => {
+    const item = document.createElement("div");
+    item.className = "popup-competitor-item";
+
+    const label = document.createElement("span");
+    label.textContent = c;
+    item.appendChild(label);
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "popup-btn-remove";
+    removeBtn.textContent = "\u00D7";
+    removeBtn.addEventListener("click", () => {
+      config.competitors.splice(i, 1);
       saveConfig();
       renderCompetitors();
     });
+    item.appendChild(removeBtn);
+
+    competitorsList.appendChild(item);
   });
 }
 

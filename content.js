@@ -19,6 +19,8 @@
   let analysisResult = null;
   let isAnalyzing = false;
   let cachedConfig = null;
+  let lastAnalyzedText = null;
+  let lastUrl = location.href;
 
   // --- Platform detection ---
 
@@ -65,6 +67,7 @@
   function runAnalysis(data) {
     if (isAnalyzing) return;
     isAnalyzing = true;
+    lastAnalyzedText = data.answer_text;
     overlay.setBadgeState("loading");
     overlay.showPanel("loading");
 
@@ -151,13 +154,36 @@
     });
   }
 
+  function resetState() {
+    extractedData = null;
+    analysisResult = null;
+    isAnalyzing = false;
+    lastAnalyzedText = null;
+    overlay.setBadgeState("idle");
+  }
+
+  function checkNavigation() {
+    const currentUrl = location.href;
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      resetState();
+    }
+  }
+
   async function checkForAIAnswer() {
     if (!currentPlatform) return;
+
+    // Detect SPA navigation (URL changed)
+    checkNavigation();
 
     const container = currentPlatform.detect();
     if (!container) return;
 
     extractedData = currentPlatform.extract(container);
+
+    // Skip re-analysis if answer text hasn't changed
+    if (extractedData.answer_text === lastAnalyzedText) return;
+
     overlay.setBadgeState("detected");
 
     // Check activation mode
