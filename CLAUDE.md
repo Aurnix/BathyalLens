@@ -12,8 +12,8 @@ UI mockup (React reference): `docs/BathyalLensMockup.jsx`
 | Phase | Focus | Status |
 |-------|-------|--------|
 | **Phase 1** | "It works" — end-to-end pipeline | **COMPLETE** |
-| **Phase 2** | "It looks amazing" — Shadow DOM, deep-sea UI, animations | **NEXT** |
-| **Phase 3** | "It's configurable" — full popup, caching polish, Perplexity tuning, copy/screenshot | NOT STARTED |
+| **Phase 2** | "It looks amazing" — Shadow DOM, deep-sea UI, animations | **COMPLETE** |
+| **Phase 3** | "It's configurable" — full popup, caching polish, Perplexity tuning, copy/screenshot | **NEXT** |
 | **Phase 4** | "It's public" — prompt tuning, edge cases, icons, README | NOT STARTED |
 
 ## What Phase 1 Built (COMPLETE)
