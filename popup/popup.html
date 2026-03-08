@@ -7,12 +7,19 @@
 <body>
   <div class="popup-container">
     <div class="popup-header">
-      <div class="popup-logo">BATHYAL LENS</div>
+      <div class="popup-header-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" fill="#00e5c7" opacity="0.8"/>
+          <circle cx="12" cy="12" r="7" stroke="#00e5c7" stroke-width="1" fill="none" opacity="0.4"/>
+          <circle cx="12" cy="12" r="11" stroke="#00e5c7" stroke-width="0.5" fill="none" opacity="0.2"/>
+        </svg>
+        <span class="popup-logo">BATHYAL LENS</span>
+      </div>
       <div class="popup-tagline">See beneath the surface</div>
     </div>
 
-    <div class="popup-section">
-      <label class="popup-label">API KEY</label>
+    <div class="popup-card">
+      <label class="popup-card-label popup-card-label--key">API Key</label>
       <div class="popup-input-row">
         <input type="password" id="apiKeyInput" placeholder="sk-ant-..." class="popup-input">
         <button id="toggleKey" class="popup-btn-small" title="Show/hide">Show</button>
@@ -22,13 +29,13 @@
       <button id="saveKey" class="popup-btn">Save API Key</button>
     </div>
 
-    <div class="popup-section">
-      <label class="popup-label">YOUR DOMAIN</label>
+    <div class="popup-card">
+      <label class="popup-card-label popup-card-label--domain">Your Domain</label>
       <input type="text" id="ownDomainInput" placeholder="example.com" class="popup-input">
     </div>
 
-    <div class="popup-section">
-      <label class="popup-label">TRACKED COMPETITORS</label>
+    <div class="popup-card">
+      <label class="popup-card-label popup-card-label--competitors">Tracked Competitors</label>
       <div id="competitorsList" class="popup-competitors"></div>
       <div class="popup-input-row">
         <input type="text" id="addCompetitorInput" placeholder="competitor.com" class="popup-input">
@@ -36,39 +43,43 @@
       </div>
     </div>
 
-    <div class="popup-section">
-      <label class="popup-label">MODEL</label>
+    <div class="popup-card">
+      <label class="popup-card-label popup-card-label--model">Model</label>
       <div class="popup-radio-group">
         <label class="popup-radio">
           <input type="radio" name="model" value="claude-haiku-4-5-20251001" checked>
-          Haiku 4.5 <span class="popup-cost">~$0.006/query</span>
+          <div class="popup-radio-label">Haiku 4.5 <span class="popup-cost">~$0.006/q</span></div>
         </label>
         <label class="popup-radio">
           <input type="radio" name="model" value="claude-sonnet-4-5-20250514">
-          Sonnet 4.5 <span class="popup-cost">~$0.018/query</span>
+          <div class="popup-radio-label">Sonnet 4.5 <span class="popup-cost">~$0.018/q</span></div>
         </label>
       </div>
     </div>
 
-    <div class="popup-section">
-      <label class="popup-label">ACTIVATION</label>
+    <div class="popup-card">
+      <label class="popup-card-label popup-card-label--activation">Activation</label>
       <div class="popup-radio-group">
         <label class="popup-radio">
           <input type="radio" name="activation" value="on-click" checked>
-          On-click <span class="popup-hint-inline">analyze when I click the badge</span>
+          <div class="popup-radio-label">On-click <span class="popup-hint-inline">badge tap to analyze</span></div>
         </label>
         <label class="popup-radio">
           <input type="radio" name="activation" value="auto">
-          Auto <span class="popup-hint-inline">analyze every AI answer automatically</span>
+          <div class="popup-radio-label">Auto <span class="popup-hint-inline">analyze every answer</span></div>
         </label>
       </div>
     </div>
 
-    <div class="popup-divider"></div>
-
-    <div id="usageSection" class="popup-usage">
-      <span>Today: <strong id="usageCount">0</strong> analyses</span>
-      <span>Est. cost: <strong id="usageCost">$0.00</strong></span>
+    <div class="popup-usage">
+      <div class="popup-usage-stat">
+        <span class="popup-usage-value" id="usageCount">0</span>
+        <span class="popup-usage-label">Analyses</span>
+      </div>
+      <div class="popup-usage-stat">
+        <span class="popup-usage-value" id="usageCost">$0.00</span>
+        <span class="popup-usage-label">Est. Cost</span>
+      </div>
     </div>
 
     <div class="popup-actions">
@@ -76,7 +87,7 @@
     </div>
 
     <div class="popup-footer">
-      bathyal.ai &middot; v0.1.0
+      v0.1.0 &middot; bathyal.ai
     </div>
   </div>
 

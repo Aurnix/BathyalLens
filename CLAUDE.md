@@ -13,8 +13,8 @@ UI mockup (React reference): `docs/BathyalLensMockup.jsx`
 |-------|-------|--------|
 | **Phase 1** | "It works" — end-to-end pipeline | **COMPLETE** |
 | **Phase 2** | "It looks amazing" — Shadow DOM, deep-sea UI, animations | **COMPLETE** |
-| **Phase 3** | "It's configurable" — full popup, caching polish, Perplexity tuning, copy/screenshot | **NEXT** |
-| **Phase 4** | "It's public" — prompt tuning, edge cases, icons, README | NOT STARTED |
+| **Phase 3** | "It's configurable" — full popup, caching polish, Perplexity tuning, copy/screenshot | **COMPLETE** |
+| **Phase 4** | "It's public" — prompt tuning, edge cases, icons, README | **NEXT** |
 
 ## Architecture
 
@@ -25,10 +25,10 @@ background.js           — Service worker (ES module). API calls, caching, usag
 content.js              — Orchestrator. Platform detection, analysis triggers, message handling. ~155 lines.
 platforms/google.js     — window.BathyalPlatforms.google — detect() + extract()
 platforms/perplexity.js — window.BathyalPlatforms.perplexity — detect() + extract()
-overlay/styles.js       — window.BathyalOverlay.PANEL_CSS — full CSS as JS string (~820 lines)
-overlay/components.js   — window.BathyalOverlay.render* — DOM-based component renderers
-overlay/panel.js        — window.BathyalOverlay.showPanel/createBadge/etc — Shadow DOM lifecycle manager
-popup/                  — Settings UI: API key, domain, competitors, model, activation mode, usage
+overlay/styles.js       — window.BathyalOverlay.PANEL_CSS — full CSS as JS string (~875 lines, includes action bar + screenshot backdrop)
+overlay/components.js   — window.BathyalOverlay.render* — DOM-based component renderers + buildReport() + action bar
+overlay/panel.js        — window.BathyalOverlay.showPanel/createBadge/toggleScreenshot/etc — Shadow DOM lifecycle manager
+popup/                  — Settings UI: deep-sea aesthetic, card layout, pill selectors, usage stats
 utils/cache.js          — LRU cache (2K entries, 24hr TTL)
 utils/hash.js           — SHA-256 hashing
 utils/parse.js          — JSON fallback chain parser
@@ -116,42 +116,74 @@ Replaced Phase 1's basic DOM injection with full deep-sea aesthetic inside Shado
 - **Section headers** — accordion toggle with arrow rotation
 - **Debug toggle** — show/hide raw JSON
 
-## What Phase 3 Should Do — "It's Configurable"
+## What Phase 3 Built (COMPLETE)
 
-**Goal:** Full popup overhaul, caching polish, copy/screenshot from panel, Perplexity tuning.
+Full popup redesign + panel action bar + caching indicator + Perplexity selector tuning.
 
-### Phase 3 Tasks
+### Popup Overhaul
+- **popup.css** — Full restyle with `--bathyal-*` CSS variables (matching overlay). Card-based sections with colored left-accent borders (cyan=key, blue=domain, amber=competitors). Pill-style radio selectors with `:has(input:checked)` highlighting. Input focus glows. Staggered `bathyal-fade-in` animation on cards. Stats-row usage display.
+- **popup.html** — Sonar SVG icon in header. Each settings group wrapped in `.popup-card` with `.popup-card-label`. Horizontal pill radio groups for model + activation. Usage shown as centered stat blocks (count + cost). Version in footer: `v0.1.0 · bathyal.ai`.
+- **popup.js** — Added `input` event listener on `ownDomainInput` (saves on each keystroke, not just blur). Save button shows "Saved" with green `.popup-btn--saved` class for 1.5s after successful validation.
 
-1. **Popup overhaul** — Redesign `popup/` with the deep-sea aesthetic matching the overlay panel. Should include:
-   - API key input with validation (existing `VALIDATE_API_KEY` message)
-   - Own domain input
-   - Competitors list (add/remove)
-   - Model selector dropdown
-   - Activation mode toggle (auto vs manual)
-   - Usage display (daily count + estimated cost)
-   - All styled with the `--bathyal-*` color palette
+### Action Bar (in result panel)
+- Two-button bar between scrollable body and stats bar: **Copy Report** + **Screenshot**
+- **Copy Report** — `buildReport(data)` helper generates formatted text:
+  - Header: 🌊 Bathyal Lens Analysis + query + platform
+  - CITED SOURCES: domain (count× — prominence)
+  - GHOST SOURCES: domain (confidence%) — evidence (60 chars)
+  - WHY THESE SOURCES WON: → description (60 chars)
+  - Footer: Analyzed by Bathyal Lens · bathyal.ai
+  - Button shows "✓ Copied" with green highlight for 2s via `.bathyal-action-btn--copied`
+- **Screenshot** — Toggles `toggleScreenshot()` in `panel.js`. Creates `.bathyal-screenshot-backdrop` (fixed, `rgba(8,11,20,0.92)`, `backdrop-filter: blur(4px)`) inserted before panel in shadow root. Backdrop auto-removed when panel is closed/removed. Button shows "Exit Screenshot" with cyan `.bathyal-action-btn--active` when active.
 
-2. **Copy Report button** — Add to panel action bar. Generates formatted text summary of analysis (see `BathyalLensMockup.jsx` `handleCopy` for format). Copies to clipboard via `navigator.clipboard.writeText`.
+### Cached Indicator
+- `content.js` now passes `message.cached` as `analysisResult._cached` to the overlay
+- `renderResult()` checks `d._cached` and appends "↻ Cached" stat (blue `--bathyal-blue`) to stats bar
 
-3. **Screenshot mode button** — Add to panel action bar. Toggles a semi-transparent backdrop behind the panel for clean screenshots. The mockup shows this as a dimmed overlay behind the panel.
+### Perplexity Selector Tuning
+- Tightened `div[dir="auto"]` to `main div[dir="auto"]` (avoids matching nav/sidebar elements)
+- Added `[class*="markdown"]` selector for Perplexity's markdown output containers
+- Note: selectors still need live verification against actual Perplexity pages
 
-4. **Caching polish** — Verify cache hits display correctly (the `cached` flag in `ANALYZE_RESULT`). Consider showing a "cached" indicator in the panel footer or stats bar.
+## What Phase 4 Should Do — "It's Public"
 
-5. **Perplexity tuning** — Live test `platforms/perplexity.js` selectors against actual Perplexity pages. Adjust `detect()` and `extract()` as needed.
+**Goal:** Prompt tuning, edge-case hardening, extension icons, README, and Chrome Web Store readiness.
 
-### Key Files to Modify in Phase 3
-- `popup/popup.html`, `popup/popup.css`, `popup/popup.js` — Full redesign
-- `overlay/components.js` — Add Copy Report + Screenshot buttons to result panel
-- `overlay/styles.js` — Add styles for action bar buttons + screenshot backdrop
-- `overlay/panel.js` — May need screenshot backdrop management
-- `platforms/perplexity.js` — Selector tuning
+### Phase 4 Tasks
 
-### What NOT to Touch in Phase 3
-- `background.js` — Service worker is stable
+1. **Prompt tuning** — Review and refine the Claude analysis prompt in `background.js` for accuracy. Test against diverse queries and AI answer styles. Ensure JSON output is consistently well-structured.
+
+2. **Google AI Overview tuning** — Live test `platforms/google.js` selectors against actual Google search pages with AI Overviews. Adjust `detect()` and `extract()` as needed. Google frequently changes their DOM structure.
+
+3. **Perplexity live testing** — Verify Phase 3's selector changes work against real Perplexity pages. Further adjust if needed.
+
+4. **Edge-case hardening** — Handle gracefully:
+   - Empty/malformed API responses
+   - Very long answers (token limits)
+   - Pages with no AI answer detected
+   - Rate limiting / API errors
+   - Multiple rapid analyses
+
+5. **Extension icons** — Create proper icon set (16×16, 32×32, 48×48, 128×128) for manifest + Chrome Web Store. Deep-sea sonar theme matching the badge SVG.
+
+6. **README** — User-facing documentation: what it does, installation, BYOK setup, supported platforms, screenshots.
+
+7. **Manifest polish** — Description, version bump, permissions audit, store listing metadata.
+
+### Key Files to Modify in Phase 4
+- `background.js` — Prompt refinement, error handling improvements
+- `platforms/google.js` — Selector tuning after live testing
+- `platforms/perplexity.js` — Further selector tuning
+- `manifest.json` — Icons, description, version, permissions
+- `README.md` — New file, user-facing docs
+- `icons/` — New directory for extension icons
+
+### What NOT to Touch in Phase 4
+- `overlay/` — UI layer is complete (Phases 2+3)
+- `popup/` — Settings UI is complete (Phase 3)
 - `utils/` — Utility layer is stable
-- `platforms/google.js` — Will be tuned in Phase 4
-- Message protocol — Don't change the message format
 - Shadow DOM architecture — Keep the closed shadow root pattern
+- Message protocol — Don't change the message format
 
 ## Development Notes
 

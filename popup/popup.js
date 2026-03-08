@@ -82,6 +82,12 @@ saveKeyBtn.addEventListener("click", async () => {
       config.apiKey = key;
       await saveConfig();
       showStatus("API key validated and saved.", "success");
+      saveKeyBtn.textContent = "Saved";
+      saveKeyBtn.classList.add("popup-btn--saved");
+      setTimeout(() => {
+        saveKeyBtn.textContent = "Save API Key";
+        saveKeyBtn.classList.remove("popup-btn--saved");
+      }, 1500);
     } else {
       showStatus("API key rejected. Check your key.", "error");
     }
@@ -160,6 +166,7 @@ document.querySelectorAll('input[name="model"], input[name="activation"]').forEa
 });
 
 ownDomainInput.addEventListener("change", saveConfig);
+ownDomainInput.addEventListener("input", saveConfig);
 
 // --- Usage ---
 

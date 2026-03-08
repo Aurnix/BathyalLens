@@ -84,7 +84,8 @@
       isAnalyzing = false;
       analysisResult = message.payload;
 
-      // Attach query/platform metadata for the panel's query bar
+      // Attach metadata for the panel
+      analysisResult._cached = message.cached || false;
       if (extractedData) {
         analysisResult._query = extractedData.query;
         analysisResult._platform = extractedData.platform;

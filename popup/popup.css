@@ -1,6 +1,24 @@
 /*
- * Bathyal Lens — Popup Styles
+ * Bathyal Lens — Popup Styles (Phase 3)
+ * Deep-sea aesthetic matching the overlay panel.
  */
+
+:root {
+  --bathyal-bg: #0a0e1a;
+  --bathyal-surface: #131a2e;
+  --bathyal-border: #1e2a45;
+  --bathyal-text: #c8d6e5;
+  --bathyal-text-bright: #e8f0f8;
+  --bathyal-text-dim: #6b7c93;
+  --bathyal-text-muted: #4a5568;
+  --bathyal-accent: #00e5c7;
+  --bathyal-blue: #00b4d8;
+  --bathyal-success: #2ed573;
+  --bathyal-danger: #ff4757;
+  --bathyal-amber: #f5a623;
+  --f-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+  --f-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
 
 * {
   box-sizing: border-box;
@@ -10,9 +28,9 @@
 
 body {
   width: 340px;
-  background: #0a0e1a;
-  color: #c8d6e5;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bathyal-bg);
+  color: var(--bathyal-text);
+  font-family: var(--f-body);
   font-size: 12px;
 }
 
@@ -20,61 +38,92 @@ body {
   padding: 16px;
 }
 
-/* Header */
+/* --- Header --- */
+
 .popup-header {
   text-align: center;
   padding-bottom: 14px;
-  border-bottom: 1px solid #1e2a45;
+  border-bottom: 1px solid var(--bathyal-border);
   margin-bottom: 14px;
 }
 
+.popup-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.popup-header-row svg {
+  display: block;
+}
+
 .popup-logo {
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
   font-size: 14px;
   font-weight: 700;
-  color: #e8f0f8;
+  color: var(--bathyal-text-bright);
   letter-spacing: 2px;
 }
 
 .popup-tagline {
   font-size: 11px;
-  color: #6b7c93;
-  margin-top: 2px;
+  color: var(--bathyal-text-dim);
+  margin-top: 3px;
 }
 
-/* Sections */
-.popup-section {
-  margin-bottom: 14px;
+/* --- Card Sections --- */
+
+.popup-card {
+  background: var(--bathyal-surface);
+  border: 1px solid var(--bathyal-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
 }
 
-.popup-label {
-  display: block;
-  font-family: "SF Mono", "Fira Code", monospace;
+.popup-card-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-mono);
   font-size: 10px;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #6b7c93;
-  margin-bottom: 6px;
+  color: var(--bathyal-text-dim);
+  margin-bottom: 8px;
+  padding-left: 8px;
+  border-left: 2px solid var(--bathyal-accent);
 }
+
+.popup-card-label--key { border-left-color: var(--bathyal-accent); }
+.popup-card-label--domain { border-left-color: var(--bathyal-blue); }
+.popup-card-label--competitors { border-left-color: var(--bathyal-amber); }
+.popup-card-label--model { border-left-color: var(--bathyal-blue); }
+.popup-card-label--activation { border-left-color: var(--bathyal-accent); }
+
+/* --- Inputs --- */
 
 .popup-input {
   width: 100%;
   padding: 8px 10px;
-  background: #131a2e;
-  border: 1px solid #1e2a45;
+  background: var(--bathyal-bg);
+  border: 1px solid var(--bathyal-border);
   border-radius: 6px;
-  color: #c8d6e5;
+  color: var(--bathyal-text);
   font-size: 12px;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .popup-input:focus {
-  border-color: #00e5c7;
+  border-color: var(--bathyal-accent);
+  box-shadow: 0 0 0 1px var(--bathyal-accent), 0 0 8px rgba(0, 229, 199, 0.15);
 }
 
 .popup-input::placeholder {
-  color: #4a5568;
+  color: var(--bathyal-text-muted);
 }
 
 .popup-input-row {
@@ -88,33 +137,31 @@ body {
 
 .popup-hint {
   font-size: 10px;
-  color: #4a5568;
+  color: var(--bathyal-text-muted);
   margin-top: 4px;
 }
 
-.popup-hint-inline {
-  font-size: 10px;
-  color: #4a5568;
-}
+/* --- Buttons --- */
 
-/* Buttons */
 .popup-btn {
   width: 100%;
   padding: 8px 12px;
-  background: #00e5c7;
-  color: #0a0e1a;
+  background: var(--bathyal-accent);
+  color: var(--bathyal-bg);
   border: none;
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   margin-top: 8px;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
   letter-spacing: 0.5px;
+  transition: background 0.15s, box-shadow 0.15s;
 }
 
 .popup-btn:hover {
   background: #00cdb2;
+  box-shadow: 0 0 12px rgba(0, 229, 199, 0.2);
 }
 
 .popup-btn:disabled {
@@ -122,76 +169,118 @@ body {
   cursor: not-allowed;
 }
 
+.popup-btn--saved {
+  background: var(--bathyal-success);
+}
+
 .popup-btn-small {
   padding: 8px 12px;
-  background: #131a2e;
-  border: 1px solid #1e2a45;
+  background: var(--bathyal-bg);
+  border: 1px solid var(--bathyal-border);
   border-radius: 6px;
-  color: #c8d6e5;
+  color: var(--bathyal-text);
   font-size: 11px;
   cursor: pointer;
   white-space: nowrap;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .popup-btn-small:hover {
-  background: #1a2340;
+  border-color: var(--bathyal-accent);
+  background: rgba(0, 229, 199, 0.05);
 }
 
 .popup-btn-secondary {
   padding: 6px 12px;
-  background: #131a2e;
-  border: 1px solid #1e2a45;
+  background: var(--bathyal-surface);
+  border: 1px solid var(--bathyal-border);
   border-radius: 6px;
-  color: #6b7c93;
+  color: var(--bathyal-text-dim);
   font-size: 10px;
   cursor: pointer;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
+  transition: color 0.15s, border-color 0.15s;
 }
 
 .popup-btn-secondary:hover {
-  color: #c8d6e5;
-  border-color: #2a3555;
+  color: var(--bathyal-text);
+  border-color: var(--bathyal-text-dim);
 }
 
-/* Status */
+/* --- Status --- */
+
 .popup-status {
   font-size: 11px;
   margin-top: 6px;
   min-height: 16px;
+  font-family: var(--f-mono);
 }
 
-.popup-status-success { color: #2ed573; }
-.popup-status-error { color: #ff4757; }
-.popup-status-pending { color: #f5a623; }
+.popup-status-success { color: var(--bathyal-success); }
+.popup-status-error { color: var(--bathyal-danger); }
+.popup-status-pending { color: var(--bathyal-amber); }
 
-/* Radio group */
+/* --- Radio / Pill Selector --- */
+
 .popup-radio-group {
   display: flex;
-  flex-direction: column;
   gap: 6px;
 }
 
 .popup-radio {
+  flex: 1;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  font-size: 12px;
-  color: #c8d6e5;
+  font-size: 11px;
+  color: var(--bathyal-text-dim);
   cursor: pointer;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--bathyal-border);
+  background: var(--bathyal-bg);
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.popup-radio:has(input:checked) {
+  border-color: var(--bathyal-accent);
+  color: var(--bathyal-text-bright);
+  background: rgba(0, 229, 199, 0.06);
+  box-shadow: 0 0 8px rgba(0, 229, 199, 0.1);
 }
 
 .popup-radio input {
-  accent-color: #00e5c7;
+  accent-color: var(--bathyal-accent);
+  margin: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.popup-radio-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
 }
 
 .popup-cost {
-  font-family: "SF Mono", "Fira Code", monospace;
-  font-size: 10px;
-  color: #6b7c93;
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--bathyal-text-muted);
 }
 
-/* Competitors */
+.popup-hint-inline {
+  font-size: 9px;
+  color: var(--bathyal-text-muted);
+  display: block;
+  margin-top: 1px;
+}
+
+/* --- Competitors --- */
+
 .popup-competitors {
   display: flex;
   flex-direction: column;
@@ -204,59 +293,103 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 6px 10px;
-  background: #131a2e;
-  border: 1px solid #1e2a45;
+  background: var(--bathyal-bg);
+  border: 1px solid var(--bathyal-border);
   border-radius: 6px;
-  font-family: "SF Mono", "Fira Code", monospace;
+  font-family: var(--f-mono);
   font-size: 11px;
+  color: var(--bathyal-text);
+  transition: border-color 0.15s;
+}
+
+.popup-competitor-item:hover {
+  border-color: var(--bathyal-amber);
 }
 
 .popup-btn-remove {
   background: none;
   border: none;
-  color: #6b7c93;
+  color: var(--bathyal-text-dim);
   cursor: pointer;
   font-size: 14px;
   padding: 0 4px;
+  transition: color 0.15s;
 }
 
 .popup-btn-remove:hover {
-  color: #ff4757;
+  color: var(--bathyal-danger);
 }
 
-/* Divider */
-.popup-divider {
-  height: 1px;
-  background: #1e2a45;
-  margin: 14px 0;
-}
+/* --- Usage Stats --- */
 
-/* Usage */
 .popup-usage {
   display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #6b7c93;
+  justify-content: space-around;
+  padding: 10px 14px;
+  background: var(--bathyal-surface);
+  border: 1px solid var(--bathyal-border);
+  border-radius: 8px;
   margin-bottom: 10px;
 }
 
-.popup-usage strong {
-  color: #e8f0f8;
+.popup-usage-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
-/* Actions */
+.popup-usage-value {
+  font-family: var(--f-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bathyal-text-bright);
+}
+
+.popup-usage-label {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  color: var(--bathyal-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- Actions --- */
+
 .popup-actions {
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
 }
 
-/* Footer */
+.popup-actions .popup-btn-secondary {
+  flex: 1;
+}
+
+/* --- Footer --- */
+
 .popup-footer {
   text-align: center;
   font-size: 10px;
-  color: #4a5568;
+  color: var(--bathyal-text-muted);
   padding-top: 8px;
-  border-top: 1px solid #1e2a45;
-  font-family: "SF Mono", "Fira Code", monospace;
+  border-top: 1px solid var(--bathyal-border);
+  font-family: var(--f-mono);
 }
+
+/* --- Fade-in animation --- */
+
+@keyframes bathyal-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.popup-card {
+  animation: bathyal-fade-in 0.3s ease both;
+}
+
+.popup-card:nth-child(1) { animation-delay: 0.03s; }
+.popup-card:nth-child(2) { animation-delay: 0.06s; }
+.popup-card:nth-child(3) { animation-delay: 0.09s; }
+.popup-card:nth-child(4) { animation-delay: 0.12s; }
+.popup-card:nth-child(5) { animation-delay: 0.15s; }
