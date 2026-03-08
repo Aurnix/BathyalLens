@@ -818,5 +818,59 @@ button {
 .bathyal-debug pre.bathyal-debug--open {
   display: block;
 }
+
+/* --- Action Bar --- */
+
+.bathyal-action-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  flex-shrink: 0;
+}
+
+.bathyal-action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--bathyal-surface);
+  border: 1px solid var(--bathyal-border);
+  color: var(--bathyal-text);
+  font-family: var(--f-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bathyal-action-btn:hover {
+  border-color: var(--bathyal-accent);
+  color: var(--bathyal-accent);
+}
+
+.bathyal-action-btn--active {
+  background: rgba(0, 229, 199, 0.08);
+  border-color: var(--bathyal-accent);
+  color: var(--bathyal-accent);
+}
+
+.bathyal-action-btn--copied {
+  background: rgba(46, 213, 115, 0.08);
+  border-color: var(--bathyal-success);
+  color: var(--bathyal-success);
+}
+
+/* --- Screenshot Backdrop --- */
+
+.bathyal-screenshot-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 11, 20, 0.92);
+  backdrop-filter: blur(4px);
+}
+
+/* --- Cached Indicator --- */
+
+.bathyal-stat-value--cached {
+  color: var(--bathyal-blue);
+}
 `;
 })();

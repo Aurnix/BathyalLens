@@ -10,8 +10,11 @@
     // Main prose answer container — Perplexity renders markdown in a prose div
     ".prose",
     '[class*="prose"]',
-    // Fallback: the main answer area below the query
-    'div[dir="auto"]',
+    // Markdown output containers (common Perplexity patterns)
+    '[class*="markdown"]',
+    // Fallback: answer area within main content (tightened to avoid matching nav/sidebar)
+    // NOTE: These selectors need live verification against actual Perplexity pages
+    'main div[dir="auto"]',
   ];
 
   const CITATION_SELECTORS = [

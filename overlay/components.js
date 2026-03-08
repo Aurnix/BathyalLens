@@ -34,6 +34,41 @@ function safeStr(str) {
   return String(str);
 }
 
+function truncate(str, len) {
+  if (!str) return "";
+  return str.length > len ? str.slice(0, len) + "..." : str;
+}
+
+function buildReport(data) {
+  const citations = (data.explicit_citations || [])
+    .map(c => `\u2022 ${c.domain} (${c.count}\u00D7 \u2014 ${c.prominence} prominence)`)
+    .join("\n");
+
+  const ghosts = (data.ghost_sources || [])
+    .map(g => `\u2022 ${g.domain} (${Math.round(g.confidence * 100)}% confidence) \u2014 ${truncate(g.evidence, 60)}`)
+    .join("\n");
+
+  const dna = (data.citation_dna || [])
+    .map(d => `\u2192 ${truncate(d.description, 60)}`)
+    .join("\n");
+
+  return `\uD83C\uDF0A Bathyal Lens Analysis
+Query: \u201C${data._query || ""}\u201D
+Platform: ${data._platform || "unknown"}
+
+CITED SOURCES:
+${citations || "(none)"}
+
+GHOST SOURCES (used but uncredited):
+${ghosts || "(none)"}
+
+WHY THESE SOURCES WON:
+${dna || "(none)"}
+
+\u2014
+Analyzed by Bathyal Lens \u00B7 bathyal.ai`;
+}
+
 // --- SVG Icons ---
 
 function sonarSvg(size, color) {
@@ -389,8 +424,36 @@ function renderResult(data, config, onMinimize, onClose) {
 
   panel.appendChild(body);
 
+  // Action bar
+  const actionBar = el("div", { class: "bathyal-action-bar" });
+
+  const copyBtn = el("button", { class: "bathyal-action-btn" }, "Copy Report");
+  copyBtn.addEventListener("click", () => {
+    const report = buildReport(d);
+    navigator.clipboard.writeText(report).then(() => {
+      copyBtn.textContent = "\u2713 Copied";
+      copyBtn.classList.add("bathyal-action-btn--copied");
+      setTimeout(() => {
+        copyBtn.textContent = "Copy Report";
+        copyBtn.classList.remove("bathyal-action-btn--copied");
+      }, 2000);
+    });
+  });
+  actionBar.appendChild(copyBtn);
+
+  const ssBtn = el("button", { class: "bathyal-action-btn" }, "Screenshot");
+  ssBtn.addEventListener("click", () => {
+    const O = window.BathyalOverlay;
+    const active = O.toggleScreenshot();
+    ssBtn.textContent = active ? "Exit Screenshot" : "Screenshot";
+    ssBtn.classList.toggle("bathyal-action-btn--active", active);
+  });
+  actionBar.appendChild(ssBtn);
+
+  panel.appendChild(actionBar);
+
   // Stats bar
-  panel.appendChild(el("div", { class: "bathyal-stats" },
+  const statsBar = el("div", { class: "bathyal-stats" },
     el("div", { class: "bathyal-stat" },
       el("span", { class: "bathyal-stat-value" }, String(stats.total_citations || 0)),
       el("span", { class: "bathyal-stat-label" }, "Sources")
@@ -407,7 +470,16 @@ function renderResult(data, config, onMinimize, onClose) {
       el("span", { class: "bathyal-stat-value" }, String(stats.answer_word_count || 0)),
       el("span", { class: "bathyal-stat-label" }, "Words")
     )
-  ));
+  );
+
+  if (d._cached) {
+    statsBar.appendChild(el("div", { class: "bathyal-stat" },
+      el("span", { class: "bathyal-stat-value bathyal-stat-value--cached" }, "\u21BB"),
+      el("span", { class: "bathyal-stat-label" }, "Cached")
+    ));
+  }
+
+  panel.appendChild(statsBar);
 
   // Footer
   panel.appendChild(el("div", { class: "bathyal-footer" },

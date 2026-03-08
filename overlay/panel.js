@@ -14,6 +14,7 @@
   let badgeEl = null;
   let panelEl = null;
   let panelVisible = false;
+  let backdropEl = null;
 
   // --- Shadow DOM Setup ---
 
@@ -108,6 +109,10 @@
       panelEl.remove();
       panelEl = null;
     }
+    if (backdropEl) {
+      backdropEl.remove();
+      backdropEl = null;
+    }
     panelVisible = false;
   }
 
@@ -131,6 +136,27 @@
     return panelVisible;
   }
 
+  // --- Screenshot backdrop ---
+
+  function toggleScreenshot() {
+    const root = ensureShadowRoot();
+    if (backdropEl) {
+      backdropEl.remove();
+      backdropEl = null;
+      return false;
+    }
+    backdropEl = document.createElement("div");
+    backdropEl.className = "bathyal-screenshot-backdrop";
+    backdropEl.style.pointerEvents = "auto";
+    // Insert before panel so panel renders on top
+    if (panelEl) {
+      root.insertBefore(backdropEl, panelEl);
+    } else {
+      root.appendChild(backdropEl);
+    }
+    return true;
+  }
+
   // --- Attach to namespace ---
   O.createBadge = createBadge;
   O.setBadgeState = setBadgeState;
@@ -139,4 +165,5 @@
   O.removePanel = removePanel;
   O.togglePanel = togglePanel;
   O.isPanelVisible = isPanelVisible;
+  O.toggleScreenshot = toggleScreenshot;
 })();
