@@ -115,8 +115,11 @@
 
   let cachedConfig = null;
   function isCompetitorDomain(domain) {
-    // Will be populated from config
-    return false;
+    if (!cachedConfig?.competitors?.length) return false;
+    const clean = domain.replace(/^www\./, "").toLowerCase();
+    return cachedConfig.competitors.some(
+      (c) => clean === c || clean.endsWith("." + c)
+    );
   }
 
   async function loadConfig() {
@@ -332,9 +335,12 @@
 
   // --- MutationObserver for AI answer detection ---
 
-  function startObserver() {
+  async function startObserver() {
     currentPlatform = getPlatform();
     if (!currentPlatform) return;
+
+    // Load config before anything else so isCompetitorDomain works on first check
+    await loadConfig();
 
     createBadge();
     setBadgeState("idle");

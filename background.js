@@ -133,6 +133,11 @@ async function callClaude(prompt, config) {
   }
 
   const data = await response.json();
+
+  if (!data.content || !data.content.length || !data.content[0].text) {
+    throw new Error("Unexpected API response shape. No content returned.");
+  }
+
   return data.content[0].text;
 }
 
@@ -149,8 +154,9 @@ async function handleAnalyzeRequest(payload, sender) {
   }
 
   try {
-    // Check cache
-    const cacheKey = await getCacheKey(payload.answer_text);
+    // Check cache — key includes config-relevant fields so config changes invalidate
+    const cacheInput = payload.answer_text + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join(",");
+    const cacheKey = await getCacheKey(cacheInput);
     const cached = await cacheGet(cacheKey);
     if (cached) {
       return { type: "ANALYZE_RESULT", payload: cached, cached: true };
@@ -181,9 +187,6 @@ async function handleAnalyzeRequest(payload, sender) {
 
     return { type: "ANALYZE_RESULT", payload: result, cached: false };
   } catch (err) {
-    if (!navigator.onLine) {
-      return { type: "ANALYZE_ERROR", error: "You appear to be offline." };
-    }
     return { type: "ANALYZE_ERROR", error: err.message || "Analysis failed." };
   }
 }
