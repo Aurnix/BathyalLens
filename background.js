@@ -211,13 +211,11 @@ async function handleAnalyzeRequest(payload, sender) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "ANALYZE_REQUEST") {
+    const tabId = sender.tab?.id;
+    if (!tabId) return false; // No tab to reply to — skip
     handleAnalyzeRequest(message.payload, sender).then((response) => {
-      // Send result back to the content script tab
-      if (sender.tab?.id) {
-        chrome.tabs.sendMessage(sender.tab.id, response);
-      }
+      chrome.tabs.sendMessage(tabId, response);
     });
-    // Return false — we'll use chrome.tabs.sendMessage to reply
     return false;
   }
 
@@ -227,9 +225,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "GET_USAGE") {
-    import("./utils/usage.js").then(({ getUsage }) => {
-      getUsage().then(sendResponse);
-    });
+    import("./utils/usage.js")
+      .then(({ getUsage }) => getUsage())
+      .then(sendResponse)
+      .catch(() => sendResponse({ date: "", count: 0, estimatedCostUsd: 0 }));
     return true;
   }
 });

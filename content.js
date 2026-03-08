@@ -100,7 +100,7 @@
       ) {
         overlay.setBadgeState("danger");
       } else {
-        overlay.setBadgeState("detected");
+        overlay.setBadgeState("success");
       }
 
       overlay.showPanel("result", analysisResult, cachedConfig);
