@@ -248,6 +248,8 @@ fieldset.popup-card legend {
 .popup-radio-group {
   display: flex;
   gap: 6px;
+  clear: left;
+  width: 100%;
 }
 
 .popup-radio {

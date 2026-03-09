@@ -51,7 +51,7 @@ Bathyal Lens uses your own Anthropic API key. Your key is stored locally and onl
 
 - **Your Domain** — Track whether your site gets cited in AI answers
 - **Tracked Competitors** — Add competitor domains to monitor their citation presence
-- **Model** — Choose between Haiku 4.5 (~$0.006/query) and Sonnet 4.5 (~$0.018/query)
+- **Model** — Choose between Haiku 4.5 (~$0.006/query) and Sonnet 4.6 (~$0.018/query)
 - **Activation** — "On-click" (analyze when you click the badge) or "Auto" (analyze every detected answer)
 
 ## Usage
@@ -102,7 +102,7 @@ You pay Anthropic directly for API usage. Estimated costs per analysis:
 | Model | Cost/Query |
 |-------|-----------|
 | Haiku 4.5 | ~$0.006 |
-| Sonnet 4.5 | ~$0.018 |
+| Sonnet 4.6 | ~$0.018 |
 
 Daily usage and estimated cost are shown in the extension popup.
 
