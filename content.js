@@ -52,7 +52,7 @@
     if (!domain || !cachedConfig?.competitors?.length) return false;
     const clean = domain.replace(/^www\./, "").toLowerCase();
     return cachedConfig.competitors.some(
-      (c) => clean === c || (clean.endsWith("." + c) && clean.length === c.length + 1 + clean.indexOf("." + c))
+      (c) => clean === c || clean.endsWith("." + c)
     );
   }
 
@@ -186,6 +186,7 @@
     analysisResult = null;
     isAnalyzing = false;
     lastAnalyzedText = null;
+    overlay.removePanel();
     overlay.setBadgeState("idle");
   }
 

@@ -253,7 +253,7 @@ function renderResult(data, config, onMinimize, onClose) {
   function isCompetitor(domain) {
     if (!domain || !competitors.length) return false;
     const clean = domain.replace(/^www\./, "").toLowerCase();
-    return competitors.some(c => clean === c || (clean.endsWith("." + c) && clean.length === c.length + 1 + clean.indexOf("." + c)));
+    return competitors.some(c => clean === c || clean.endsWith("." + c));
   }
 
   const panel = el("div", { class: "bathyal-panel" });
@@ -330,8 +330,15 @@ function renderResult(data, config, onMinimize, onClose) {
         const tracked = el("div", { class: "bathyal-tracked" });
         tracked.appendChild(el("div", { class: "bathyal-tracked-title" }, "Tracked Competitors"));
         for (const comp of competitors) {
-          const cited = citations.find(c => c.domain === comp);
-          const ghost = (d.ghost_sources || []).find(g => g.domain === comp);
+          const normComp = comp.replace(/^www\./, "").toLowerCase();
+          const cited = citations.find(c => {
+            const d = (c.domain || "").replace(/^www\./, "").toLowerCase();
+            return d === normComp || d.endsWith("." + normComp);
+          });
+          const ghost = (d.ghost_sources || []).find(g => {
+            const d = (g.domain || "").replace(/^www\./, "").toLowerCase();
+            return d === normComp || d.endsWith("." + normComp);
+          });
           let icon, color, label;
           if (cited) {
             icon = "\u25CF"; color = "#f5a623"; label = `CITED (${cited.count}\u00D7)`;
@@ -445,6 +452,11 @@ function renderResult(data, config, onMinimize, onClose) {
           copyBtn.textContent = "Copy Report";
           copyBtn.classList.remove("bathyal-action-btn--copied");
         }
+      }, 2000);
+    }).catch(() => {
+      copyBtn.textContent = "Copy failed";
+      setTimeout(() => {
+        if (copyBtn.isConnected) copyBtn.textContent = "Copy Report";
       }, 2000);
     });
   });

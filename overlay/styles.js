@@ -302,6 +302,7 @@ button {
 
 .bathyal-body {
   flex: 1;
+  min-height: 0; /* Allow flex child to shrink below content height so overflow scrolls */
   overflow-y: auto;
   padding: 12px 16px;
   display: flex;
@@ -327,6 +328,7 @@ button {
   border-radius: 8px;
   border: 1px solid var(--bathyal-border);
   overflow: hidden;
+  flex-shrink: 0; /* Prevent flex compression — sections must keep full height so body scrolls */
 }
 
 .bathyal-section-header {
