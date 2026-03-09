@@ -74,12 +74,24 @@ body {
 
 /* --- Card Sections --- */
 
-.popup-card {
+/* Cards and fieldsets share the same visual style */
+.popup-card,
+fieldset.popup-card {
   background: var(--bathyal-surface);
   border: 1px solid var(--bathyal-border);
   border-radius: 8px;
   padding: 12px 14px;
   margin-bottom: 10px;
+}
+
+/* Reset fieldset-specific browser defaults */
+fieldset.popup-card {
+  min-inline-size: auto;
+}
+
+fieldset.popup-card legend {
+  float: left;
+  width: 100%;
 }
 
 .popup-card-label {
@@ -117,9 +129,19 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.popup-input:focus {
+.popup-input:focus,
+.popup-input:focus-visible {
   border-color: var(--bathyal-accent);
   box-shadow: 0 0 0 1px var(--bathyal-accent), 0 0 8px rgba(0, 229, 199, 0.15);
+}
+
+/* Keyboard-only focus ring for buttons */
+.popup-btn:focus-visible,
+.popup-btn-small:focus-visible,
+.popup-btn-secondary:focus-visible,
+.popup-btn-remove:focus-visible {
+  outline: 2px solid var(--bathyal-accent);
+  outline-offset: 2px;
 }
 
 .popup-input::placeholder {

@@ -1,8 +1,19 @@
 /**
  * Robust JSON parsing with fallback chain.
  * Handles common LLM output quirks: markdown fences, preamble text, etc.
+ *
+ * @module parse
  */
 
+/**
+ * Attempts to parse Claude's response text as JSON using a 3-step fallback chain:
+ *  1. Direct JSON.parse
+ *  2. Strip markdown code fences and parse inner content
+ *  3. Extract outermost { ... } and parse
+ *
+ * @param {string} text - The raw response text from Claude.
+ * @returns {Object|null} The parsed analysis object, or null if unparseable.
+ */
 export function parseAnalysisJSON(text) {
   if (!text || typeof text !== "string") return null;
 

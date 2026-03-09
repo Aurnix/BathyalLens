@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>Bathyal Lens Settings</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="popup-container">
     <div class="popup-header">
       <div class="popup-header-row">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" role="presentation" aria-hidden="true">
           <circle cx="12" cy="12" r="3" fill="#00e5c7" opacity="0.8"/>
           <circle cx="12" cy="12" r="7" stroke="#00e5c7" stroke-width="1" fill="none" opacity="0.4"/>
           <circle cx="12" cy="12" r="11" stroke="#00e5c7" stroke-width="0.5" fill="none" opacity="0.2"/>
@@ -19,32 +20,32 @@
     </div>
 
     <div class="popup-card">
-      <label class="popup-card-label popup-card-label--key">API Key</label>
+      <label for="apiKeyInput" class="popup-card-label popup-card-label--key">API Key</label>
       <div class="popup-input-row">
-        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." class="popup-input">
-        <button id="toggleKey" class="popup-btn-small" title="Show/hide">Show</button>
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." class="popup-input" aria-label="Anthropic API key">
+        <button id="toggleKey" class="popup-btn-small" title="Show or hide API key" aria-label="Show API key">Show</button>
       </div>
       <div class="popup-hint">Stored locally. Only sent to api.anthropic.com.</div>
-      <div id="keyStatus" class="popup-status"></div>
+      <div id="keyStatus" class="popup-status" role="status" aria-live="polite"></div>
       <button id="saveKey" class="popup-btn">Save API Key</button>
     </div>
 
     <div class="popup-card">
-      <label class="popup-card-label popup-card-label--domain">Your Domain</label>
-      <input type="text" id="ownDomainInput" placeholder="example.com" class="popup-input">
+      <label for="ownDomainInput" class="popup-card-label popup-card-label--domain">Your Domain</label>
+      <input type="text" id="ownDomainInput" placeholder="example.com" class="popup-input" aria-label="Your domain name">
     </div>
 
     <div class="popup-card">
-      <label class="popup-card-label popup-card-label--competitors">Tracked Competitors</label>
-      <div id="competitorsList" class="popup-competitors"></div>
+      <label for="addCompetitorInput" class="popup-card-label popup-card-label--competitors">Tracked Competitors</label>
+      <div id="competitorsList" class="popup-competitors" role="list" aria-label="Tracked competitor domains"></div>
       <div class="popup-input-row">
-        <input type="text" id="addCompetitorInput" placeholder="competitor.com" class="popup-input">
-        <button id="addCompetitor" class="popup-btn-small">+ Add</button>
+        <input type="text" id="addCompetitorInput" placeholder="competitor.com" class="popup-input" aria-label="Add competitor domain">
+        <button id="addCompetitor" class="popup-btn-small" aria-label="Add competitor">+ Add</button>
       </div>
     </div>
 
-    <div class="popup-card">
-      <label class="popup-card-label popup-card-label--model">Model</label>
+    <fieldset class="popup-card">
+      <legend class="popup-card-label popup-card-label--model">Model</legend>
       <div class="popup-radio-group">
         <label class="popup-radio">
           <input type="radio" name="model" value="claude-haiku-4-5-20251001" checked>
@@ -55,10 +56,10 @@
           <div class="popup-radio-label">Sonnet 4.5 <span class="popup-cost">~$0.018/q</span></div>
         </label>
       </div>
-    </div>
+    </fieldset>
 
-    <div class="popup-card">
-      <label class="popup-card-label popup-card-label--activation">Activation</label>
+    <fieldset class="popup-card">
+      <legend class="popup-card-label popup-card-label--activation">Activation</legend>
       <div class="popup-radio-group">
         <label class="popup-radio">
           <input type="radio" name="activation" value="on-click" checked>
@@ -69,7 +70,7 @@
           <div class="popup-radio-label">Auto <span class="popup-hint-inline">analyze every answer</span></div>
         </label>
       </div>
-    </div>
+    </fieldset>
 
     <div class="popup-usage">
       <div class="popup-usage-stat">
@@ -87,7 +88,7 @@
     </div>
 
     <div class="popup-footer">
-      v0.1.0 &middot; bathyal.ai
+      v1.0.0 &middot; bathyal.ai
     </div>
   </div>
 

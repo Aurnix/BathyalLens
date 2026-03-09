@@ -10,6 +10,7 @@
 
   // --- Helpers ---
 
+/** Creates a DOM element with attributes and children. */
 function el(tag, attrs, ...children) {
   const node = document.createElement(tag);
   if (attrs) {
@@ -29,7 +30,8 @@ function el(tag, attrs, ...children) {
   return node;
 }
 
-function safeStr(str) {
+/** Coerces a value to a safe display string. Returns "" for nullish/falsy values. */
+function toDisplayStr(str) {
   if (!str) return "";
   return String(str);
 }
@@ -151,7 +153,7 @@ function renderError(error, onMinimize, onClose) {
     renderHeader(onMinimize, onClose),
     el("div", { class: "bathyal-error" },
       el("div", { class: "bathyal-error-icon" }, "\u26A0"),
-      el("div", { class: "bathyal-error-text" }, safeStr(error))
+      el("div", { class: "bathyal-error-text" }, toDisplayStr(error))
     )
   );
   return panel;
@@ -221,8 +223,9 @@ function renderProminence(prominence) {
 // --- Confidence Bar ---
 
 function renderConfidence(confidence) {
-  const pct = Math.round(confidence * 100);
-  const color = confidence >= 0.8 ? "#a55eea" : confidence >= 0.65 ? "#8854d0" : "#6b7c93";
+  const conf = confidence || 0;
+  const pct = Math.round(conf * 100);
+  const color = conf >= 0.8 ? "#a55eea" : conf >= 0.65 ? "#8854d0" : "#6b7c93";
 
   return el("div", { class: "bathyal-confidence-row" },
     el("div", { class: "bathyal-confidence-bar-bg" },
@@ -248,9 +251,9 @@ function renderResult(data, config, onMinimize, onClose) {
   const own = d.own_domain_status || {};
 
   function isCompetitor(domain) {
-    if (!competitors.length) return false;
+    if (!domain || !competitors.length) return false;
     const clean = domain.replace(/^www\./, "").toLowerCase();
-    return competitors.some(c => clean === c || clean.endsWith("." + c));
+    return competitors.some(c => clean === c || (clean.endsWith("." + c) && clean.length === c.length + 1 + clean.indexOf("." + c)));
   }
 
   const panel = el("div", { class: "bathyal-panel" });
@@ -262,7 +265,7 @@ function renderResult(data, config, onMinimize, onClose) {
   if (d._query) {
     panel.appendChild(el("div", { class: "bathyal-query-bar" },
       el("div", { class: "bathyal-query-platform" }, d._platform || "Analysis"),
-      el("div", { class: "bathyal-query-text" }, `\u201C${safeStr(d._query)}\u201D`)
+      el("div", { class: "bathyal-query-text" }, `\u201C${toDisplayStr(d._query)}\u201D`)
     ));
   }
 
@@ -284,7 +287,7 @@ function renderResult(data, config, onMinimize, onClose) {
   // Citation Map
   const citations = d.explicit_citations || [];
   if (citations.length > 0) {
-    const maxCount = Math.max(...citations.map(c => c.count), 1);
+    const maxCount = Math.max(...citations.map(c => c.count || 0), 1);
     body.appendChild(renderSection({
       title: "Citation Map",
       accentColor: "#00e5c7",
@@ -295,10 +298,11 @@ function renderResult(data, config, onMinimize, onClose) {
       const rows = el("div", { style: { display: "flex", flexDirection: "column", gap: "8px" } });
       for (const c of citations) {
         const comp = isCompetitor(c.domain);
-        const pct = Math.round((c.count / maxCount) * 100);
+        const count = c.count || 0;
+        const pct = Math.round((count / maxCount) * 100);
         const domainEl = el("span", {
           class: `bathyal-cite-domain${comp ? " bathyal-cite-domain--competitor" : ""}`
-        }, safeStr(c.domain));
+        }, toDisplayStr(c.domain));
         domainEl.addEventListener("click", () => {
           const domain = c.domain.replace(/^https?:\/\//, "");
           try {
@@ -315,7 +319,7 @@ function renderResult(data, config, onMinimize, onClose) {
               style: { width: `${pct}%` }
             })
           ),
-          el("span", { class: "bathyal-cite-count" }, `${c.count}\u00D7`),
+          el("span", { class: "bathyal-cite-count" }, `${count}\u00D7`),
           renderProminence(c.prominence)
         ));
       }
@@ -364,9 +368,9 @@ function renderResult(data, config, onMinimize, onClose) {
         content.appendChild(el("div", { class: "bathyal-ghost-card" },
           el("div", { class: "bathyal-ghost-header" },
             el("span", { class: "bathyal-ghost-icon" }, "\u25D0"),
-            el("span", { class: "bathyal-ghost-domain" }, safeStr(g.domain))
+            el("span", { class: "bathyal-ghost-domain" }, toDisplayStr(g.domain))
           ),
-          el("div", { class: "bathyal-ghost-evidence" }, safeStr(g.evidence)),
+          el("div", { class: "bathyal-ghost-evidence" }, toDisplayStr(g.evidence)),
           renderConfidence(g.confidence)
         ));
       }
@@ -387,12 +391,12 @@ function renderResult(data, config, onMinimize, onClose) {
         content.appendChild(el("div", { class: "bathyal-dna-card" },
           el("div", { class: "bathyal-dna-header" },
             el("span", { class: "bathyal-dna-icon" }, "\u2726"),
-            el("span", { class: "bathyal-dna-pattern" }, safeStr(item.pattern.replace(/_/g, " "))),
+            el("span", { class: "bathyal-dna-pattern" }, toDisplayStr((item.pattern || "").replace(/_/g, " "))),
             el("span", {
               class: `bathyal-dna-strength bathyal-dna-strength--${item.strength}`
             }, item.strength)
           ),
-          el("div", { class: "bathyal-dna-desc" }, safeStr(item.description))
+          el("div", { class: "bathyal-dna-desc" }, toDisplayStr(item.description))
         ));
       }
     }));
@@ -407,7 +411,7 @@ function renderResult(data, config, onMinimize, onClose) {
       staggerClass: "bathyal-stagger-4"
     }, (content) => {
       content.appendChild(el("div", { class: "bathyal-rec-card" },
-        el("div", { class: "bathyal-rec-text" }, safeStr(own.recommendation))
+        el("div", { class: "bathyal-rec-text" }, toDisplayStr(own.recommendation))
       ));
     }));
   }
@@ -427,15 +431,20 @@ function renderResult(data, config, onMinimize, onClose) {
   // Action bar
   const actionBar = el("div", { class: "bathyal-action-bar" });
 
+  let copyTimerId = null;
   const copyBtn = el("button", { class: "bathyal-action-btn" }, "Copy Report");
   copyBtn.addEventListener("click", () => {
     const report = buildReport(d);
     navigator.clipboard.writeText(report).then(() => {
       copyBtn.textContent = "\u2713 Copied";
       copyBtn.classList.add("bathyal-action-btn--copied");
-      setTimeout(() => {
-        copyBtn.textContent = "Copy Report";
-        copyBtn.classList.remove("bathyal-action-btn--copied");
+      clearTimeout(copyTimerId);
+      copyTimerId = setTimeout(() => {
+        // Only reset if button is still in the DOM
+        if (copyBtn.isConnected) {
+          copyBtn.textContent = "Copy Report";
+          copyBtn.classList.remove("bathyal-action-btn--copied");
+        }
       }, 2000);
     });
   });
@@ -484,7 +493,7 @@ function renderResult(data, config, onMinimize, onClose) {
   // Footer
   panel.appendChild(el("div", { class: "bathyal-footer" },
     el("span", { class: "bathyal-footer-text" }, "bathyal.ai"),
-    el("span", { class: "bathyal-footer-text" }, "v0.1.0")
+    el("span", { class: "bathyal-footer-text" }, "v1.0.0")
   ));
 
   return panel;

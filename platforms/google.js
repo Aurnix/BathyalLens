@@ -1,10 +1,17 @@
 /**
  * Google AI Overview detection and extraction.
  * Attaches to window.BathyalPlatforms.google for content script access.
+ *
+ * NOTE: Google frequently changes AI Overview DOM structure.
+ * These selectors should be re-verified against live pages during Phase 4.
+ * Last verified: Phase 1 (initial build).
  */
 
 (function () {
   window.BathyalPlatforms = window.BathyalPlatforms || {};
+
+  /** Minimum character count to consider a container as a real AI answer (not just a label). */
+  const MIN_ANSWER_LENGTH = 100;
 
   const SELECTORS = [
     '[data-attrid*="ai_overview"]',
@@ -12,39 +19,63 @@
     '.wDYxhc:has(.LGOjhe)',
   ];
 
+  /**
+   * Detects the AI Overview container on a Google search results page.
+   * @returns {Element|null} The container element, or null if not found.
+   */
   function detect() {
-    // Try each selector in order
     for (const sel of SELECTORS) {
       try {
         const el = document.querySelector(sel);
-        if (el && el.innerText.trim().length > 20) return el;
-      } catch {}
+        if (el && el.innerText.trim().length > MIN_ANSWER_LENGTH) return el;
+      } catch (e) {
+        console.warn("[BathyalLens] Google selector failed:", sel, e);
+      }
     }
 
     // Heading-text fallback: look for element containing "AI Overview"
     const headings = document.querySelectorAll("h2, h3, div[role='heading']");
     for (const h of headings) {
       if (h.textContent.trim() === "AI Overview") {
-        // Return the parent container that holds the actual answer content
         const container = h.closest("div[data-attrid]") || h.parentElement?.parentElement;
-        if (container && container.innerText.trim().length > 20) return container;
+        if (container && container.innerText.trim().length > MIN_ANSWER_LENGTH) return container;
       }
     }
 
     return null;
   }
 
+  /**
+   * Extracts answer text and citations from a detected AI Overview container.
+   * Handles Google redirect URLs (google.com/url?q=...) and filters internal links.
+   * @param {Element} container - The AI Overview DOM element.
+   * @returns {Object} The extraction payload.
+   */
   function extract(container) {
     const answerText = container.innerText.trim();
 
-    // Extract all links, filtering out Google internal links
     const links = Array.from(container.querySelectorAll("a[href]"));
     const citations = [];
     const seen = new Set();
 
     for (const a of links) {
-      const href = a.href;
-      if (!href || href.includes("google.com") || href.startsWith("javascript:")) continue;
+      let href = a.href;
+      if (!href || href.startsWith("javascript:")) continue;
+
+      // Unwrap Google redirect URLs: /url?q=<actual_url>
+      try {
+        const parsed = new URL(href);
+        if (parsed.hostname.includes("google.com") && parsed.pathname === "/url") {
+          const target = parsed.searchParams.get("q");
+          if (target) href = target;
+          else continue;
+        } else if (parsed.hostname.includes("google.com")) {
+          continue;
+        }
+      } catch (e) {
+        console.warn("[BathyalLens] Skipping malformed href:", href, e);
+        continue;
+      }
 
       try {
         const url = new URL(href);
@@ -57,11 +88,17 @@
           url: href,
           anchor_text: a.textContent.trim() || domain,
         });
-      } catch {}
+      } catch (e) {
+        console.warn("[BathyalLens] Skipping unparseable URL:", href, e);
+      }
     }
 
-    // Query from URL params
-    const query = new URL(window.location.href).searchParams.get("q") || "";
+    let query = "";
+    try {
+      query = new URL(window.location.href).searchParams.get("q") || "";
+    } catch {
+      // Malformed page URL — leave query empty
+    }
 
     return {
       platform: "google_ai_overview",
