@@ -328,6 +328,7 @@ button {
   border-radius: 8px;
   border: 1px solid var(--bathyal-border);
   overflow: hidden;
+  flex-shrink: 0; /* Prevent flex compression — sections must keep full height so body scrolls */
 }
 
 .bathyal-section-header {
