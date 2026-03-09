@@ -67,10 +67,14 @@
   function showPanel(state, data, config) {
     const root = ensureShadowRoot();
 
-    // Remove existing panel
+    // Remove existing panel and any stale backdrop
     if (panelEl) {
       panelEl.remove();
       panelEl = null;
+    }
+    if (backdropEl) {
+      backdropEl.remove();
+      backdropEl = null;
     }
 
     if (state === "loading") {
@@ -89,7 +93,16 @@
   }
 
   function hidePanel() {
-    if (!panelEl) return;
+    if (!panelEl || !panelVisible) return;
+
+    // Set immediately to prevent double-fire on rapid toggle
+    panelVisible = false;
+
+    // Remove backdrop if active (user can't dismiss it while panel is hidden)
+    if (backdropEl) {
+      backdropEl.remove();
+      backdropEl = null;
+    }
 
     // Capture reference to avoid stale closure if showPanel() replaces panelEl mid-animation
     const currentPanel = panelEl;
@@ -99,7 +112,6 @@
       if (panelEl === currentPanel) {
         currentPanel.style.display = "none";
         currentPanel.classList.remove("bathyal-panel--closing");
-        panelVisible = false;
       }
     }, { once: true });
   }

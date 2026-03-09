@@ -195,7 +195,12 @@ async function callClaude(prompt, config) {
     throw new Error(message);
   }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Failed to parse API response.");
+  }
 
   if (!data.content || !data.content.length || !data.content[0].text) {
     throw new Error("Unexpected API response shape. No content returned.");
@@ -213,7 +218,7 @@ async function callClaude(prompt, config) {
  * @returns {Object} A normalized result with all fields guaranteed.
  */
 function normalizeResult(raw) {
-  return {
+  const result = {
     explicit_citations: Array.isArray(raw.explicit_citations)
       ? raw.explicit_citations.map(c => ({
           domain: String(c.domain || ""),
@@ -235,25 +240,29 @@ function normalizeResult(raw) {
       ? raw.citation_dna.slice(0, 4).map(d => ({
           pattern: String(d.pattern || ""),
           description: String(d.description || ""),
-          strength: ["strong", "moderate"].includes(d.strength) ? d.strength : "moderate",
+          strength: ["strong", "moderate", "weak"].includes(d.strength) ? d.strength : "moderate",
         }))
       : [],
     own_domain_status: raw.own_domain_status
       ? {
-          cited: Boolean(raw.own_domain_status.cited),
-          ghost: Boolean(raw.own_domain_status.ghost),
+          cited: raw.own_domain_status.cited === null ? null : Boolean(raw.own_domain_status.cited),
+          ghost: raw.own_domain_status.ghost === null ? null : Boolean(raw.own_domain_status.ghost),
           recommendation: raw.own_domain_status.recommendation != null
             ? String(raw.own_domain_status.recommendation)
             : null,
         }
       : { cited: false, ghost: false, recommendation: null },
-    stats: {
-      total_citations: Number(raw.stats?.total_citations) || 0,
-      unique_domains: Number(raw.stats?.unique_domains) || 0,
-      ghost_count: Number(raw.stats?.ghost_count) || 0,
-      answer_word_count: Number(raw.stats?.answer_word_count) || 0,
-    },
   };
+
+  // Re-derive stats from actual normalized data to ensure consistency after filtering
+  result.stats = {
+    total_citations: result.explicit_citations.reduce((sum, c) => sum + c.count, 0),
+    unique_domains: result.explicit_citations.length,
+    ghost_count: result.ghost_sources.length,
+    answer_word_count: Number(raw.stats?.answer_word_count) || 0,
+  };
+
+  return result;
 }
 
 // --- Main analysis handler ---
@@ -286,7 +295,7 @@ async function handleAnalyzeRequest(payload) {
   try {
     // Check cache — key includes all fields that affect analysis output
     const model = config.model || DEFAULT_MODEL;
-    const cacheInput = payload.answer_text + "\0" + (payload.query || "") + "\0" + (payload.platform || "") + "\0" + model + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join("\0") + "\0v" + PROMPT_VERSION;
+    const cacheInput = answerText + "\0" + (payload.query || "") + "\0" + (payload.platform || "") + "\0" + model + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join(",") + "\0v" + PROMPT_VERSION;
     const cacheKey = await getCacheKey(cacheInput);
     const cached = await cacheGet(cacheKey);
     if (cached) {

@@ -59,7 +59,11 @@
     // Helper to process a single link element
     function processLink(a) {
       const href = a.href;
-      if (!href || href.includes("perplexity.ai")) return;
+      if (!href) return;
+      try {
+        const parsedHref = new URL(href);
+        if (parsedHref.hostname.includes("perplexity.ai")) return;
+      } catch { return; }
 
       try {
         const url = new URL(href);

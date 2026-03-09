@@ -49,9 +49,11 @@ async function loadConfig() {
 // --- Save config ---
 
 async function saveConfig() {
+  // Guard against running after popup is closed (e.g. from debounced timer)
+  if (!document.body.isConnected) return;
   config.ownDomain = cleanDomain(ownDomainInput.value);
-  config.model = document.querySelector('input[name="model"]:checked')?.value || "claude-haiku-4-5-20251001";
-  config.activationMode = document.querySelector('input[name="activation"]:checked')?.value || "on-click";
+  config.model = document.querySelector('input[name="model"]:checked')?.value || config.model || "claude-haiku-4-5-20251001";
+  config.activationMode = document.querySelector('input[name="activation"]:checked')?.value || config.activationMode || "on-click";
   await chrome.storage.local.set({ config });
 }
 
@@ -90,7 +92,7 @@ saveKeyBtn.addEventListener("click", async () => {
     });
     clearTimeout(timeoutId);
 
-    if (result.valid) {
+    if (result && result.valid) {
       config.apiKey = key;
       await saveConfig();
       showStatus("API key validated and saved.", "success");
