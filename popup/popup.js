@@ -1,5 +1,6 @@
 /**
  * Bathyal Lens — Popup (Settings)
+ * Manages API key, domain tracking, model/activation settings, usage display.
  */
 
 const apiKeyInput = document.getElementById("apiKeyInput");
@@ -14,7 +15,11 @@ const clearCacheBtn = document.getElementById("clearCache");
 const usageCount = document.getElementById("usageCount");
 const usageCost = document.getElementById("usageCost");
 
+const VALIDATION_TIMEOUT_MS = 15000;
+const DOMAIN_REGEX = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+
 let config = {};
+let domainSaveTimer = null;
 
 // --- Load config on open ---
 
@@ -72,11 +77,18 @@ saveKeyBtn.addEventListener("click", async () => {
   showStatus("Validating...", "pending");
   saveKeyBtn.disabled = true;
 
+  // Timeout guard — re-enable button if validation never responds
+  const timeoutId = setTimeout(() => {
+    saveKeyBtn.disabled = false;
+    showStatus("Validation timed out. Check your network and retry.", "error");
+  }, VALIDATION_TIMEOUT_MS);
+
   try {
     const result = await chrome.runtime.sendMessage({
       type: "VALIDATE_API_KEY",
       apiKey: key,
     });
+    clearTimeout(timeoutId);
 
     if (result.valid) {
       config.apiKey = key;
@@ -92,6 +104,7 @@ saveKeyBtn.addEventListener("click", async () => {
       showStatus("API key rejected. Check your key.", "error");
     }
   } catch (err) {
+    clearTimeout(timeoutId);
     showStatus("Validation failed. Key not saved — check network and retry.", "error");
   }
 
@@ -105,6 +118,11 @@ function showStatus(text, type) {
 
 // --- Domain helpers ---
 
+/**
+ * Strips protocol, www prefix, and trailing slashes from a domain string.
+ * @param {string} val - Raw domain input.
+ * @returns {string} Cleaned domain.
+ */
 function cleanDomain(val) {
   return val
     .trim()
@@ -114,13 +132,22 @@ function cleanDomain(val) {
     .replace(/\/+$/, "");
 }
 
+/**
+ * Validates that a cleaned domain string looks like a valid domain name.
+ * @param {string} domain - The cleaned domain string.
+ * @returns {boolean}
+ */
+function isValidDomain(domain) {
+  return domain.length > 0 && DOMAIN_REGEX.test(domain);
+}
+
 // --- Competitors ---
 
 function renderCompetitors() {
   const comps = config.competitors || [];
   competitorsList.textContent = "";
 
-  comps.forEach((c, i) => {
+  for (const c of comps) {
     const item = document.createElement("div");
     item.className = "popup-competitor-item";
 
@@ -131,20 +158,28 @@ function renderCompetitors() {
     const removeBtn = document.createElement("button");
     removeBtn.className = "popup-btn-remove";
     removeBtn.textContent = "\u00D7";
+    removeBtn.setAttribute("aria-label", `Remove ${c}`);
+    // Use domain value (not array index) for reliable removal
     removeBtn.addEventListener("click", () => {
-      config.competitors.splice(i, 1);
+      const idx = config.competitors.indexOf(c);
+      if (idx !== -1) config.competitors.splice(idx, 1);
       saveConfig();
       renderCompetitors();
     });
     item.appendChild(removeBtn);
 
     competitorsList.appendChild(item);
-  });
+  }
 }
 
 addCompetitorBtn.addEventListener("click", () => {
   const domain = cleanDomain(addCompetitorInput.value);
   if (!domain) return;
+
+  if (!isValidDomain(domain)) {
+    addCompetitorInput.value = "";
+    return;
+  }
 
   config.competitors = config.competitors || [];
   if (!config.competitors.includes(domain)) {
@@ -166,7 +201,11 @@ document.querySelectorAll('input[name="model"], input[name="activation"]').forEa
 });
 
 ownDomainInput.addEventListener("change", saveConfig);
-ownDomainInput.addEventListener("input", saveConfig);
+// Debounce keystroke saves to avoid storage thrashing
+ownDomainInput.addEventListener("input", () => {
+  clearTimeout(domainSaveTimer);
+  domainSaveTimer = setTimeout(saveConfig, 500);
+});
 
 // --- Usage ---
 
@@ -174,10 +213,12 @@ async function loadUsage() {
   try {
     const usage = await chrome.runtime.sendMessage({ type: "GET_USAGE" });
     if (usage) {
-      usageCount.textContent = usage.count || 0;
-      usageCost.textContent = `$${(usage.estimatedCostUsd || 0).toFixed(2)}`;
+      usageCount.textContent = usage.count ?? 0;
+      usageCost.textContent = `$${(usage.estimatedCostUsd ?? 0).toFixed(2)}`;
     }
-  } catch {}
+  } catch (err) {
+    console.warn("[BathyalLens] Failed to load usage:", err);
+  }
 }
 
 // --- Clear cache ---

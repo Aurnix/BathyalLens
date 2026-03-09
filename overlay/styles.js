@@ -738,6 +738,7 @@ button {
   border: 1px solid var(--bathyal-accent);
   opacity: 0;
   animation: bathyal-sonar-ping 2s ease-out infinite;
+  will-change: transform, opacity;
 }
 
 .bathyal-sonar-dot {
@@ -863,6 +864,7 @@ button {
 .bathyal-screenshot-backdrop {
   position: fixed;
   inset: 0;
+  z-index: 2147483645;
   background: rgba(8, 11, 20, 0.92);
   backdrop-filter: blur(4px);
 }

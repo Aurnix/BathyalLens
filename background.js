@@ -1,6 +1,11 @@
 /**
  * Bathyal Lens — Service Worker (background.js)
+ *
  * Handles: API calls to Anthropic, caching, usage tracking, message routing, context menu.
+ * All fetch calls use AbortController timeouts. Usage is tracked only on successful parse.
+ * Cache keys include a prompt version to allow invalidation on prompt changes.
+ *
+ * @module background
  */
 
 import { getCacheKey } from "./utils/hash.js";
@@ -8,8 +13,21 @@ import { parseAnalysisJSON } from "./utils/parse.js";
 import { cacheGet, cacheSet } from "./utils/cache.js";
 import { trackUsage } from "./utils/usage.js";
 
+// --- Model constants (single source of truth) ---
+
+const DEFAULT_MODEL = "claude-haiku-4-5-20251001";
+
+/**
+ * Bump this when the analysis prompt changes to invalidate stale cache entries.
+ */
+const PROMPT_VERSION = 1;
+
+const ANALYSIS_TIMEOUT_MS = 60000;
+const VALIDATION_TIMEOUT_MS = 10000;
+
 // --- Config helpers ---
 
+/** @returns {Promise<Object>} The config object. */
 async function getConfig() {
   const data = await chrome.storage.local.get("config");
   return data.config || {};
@@ -97,11 +115,18 @@ Rules:
 
 // --- Anthropic API caller ---
 
+/**
+ * Calls the Anthropic Messages API with an abort timeout.
+ * @param {Object} prompt - The {system, user} prompt object.
+ * @param {Object} config - The user config (must include apiKey).
+ * @returns {Promise<string>} The raw text response from Claude.
+ * @throws {Error} On timeout, network failure, or API error.
+ */
 async function callClaude(prompt, config) {
-  const model = config.model || "claude-haiku-4-5-20251001";
+  const model = config.model || DEFAULT_MODEL;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+  const timeoutId = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
 
   let response;
   try {
@@ -123,7 +148,7 @@ async function callClaude(prompt, config) {
     });
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === "AbortError") throw new Error("API request timed out after 60 seconds.");
+    if (err.name === "AbortError") throw new Error(`API request timed out after ${Math.round(ANALYSIS_TIMEOUT_MS / 1000)} seconds.`);
     throw err;
   }
   clearTimeout(timeoutId);
@@ -155,7 +180,13 @@ async function callClaude(prompt, config) {
 
 // --- Main analysis handler ---
 
-async function handleAnalyzeRequest(payload, sender) {
+/**
+ * Handles a full analysis request: checks cache, calls Claude, parses, caches, tracks usage.
+ * Only tracks usage on successful parse — no double-counting on retry.
+ * @param {Object} payload - The extraction payload from the content script.
+ * @returns {Promise<Object>} An ANALYZE_RESULT or ANALYZE_ERROR message.
+ */
+async function handleAnalyzeRequest(payload) {
   const config = await getConfig();
 
   if (!config.apiKey) {
@@ -167,8 +198,8 @@ async function handleAnalyzeRequest(payload, sender) {
 
   try {
     // Check cache — key includes all fields that affect analysis output
-    const model = config.model || "claude-haiku-4-5-20251001";
-    const cacheInput = payload.answer_text + "\0" + (payload.query || "") + "\0" + (payload.platform || "") + "\0" + model + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join("\0");
+    const model = config.model || DEFAULT_MODEL;
+    const cacheInput = payload.answer_text + "\0" + (payload.query || "") + "\0" + (payload.platform || "") + "\0" + model + "\0" + (config.ownDomain || "") + "\0" + (config.competitors || []).join("\0") + "\0v" + PROMPT_VERSION;
     const cacheKey = await getCacheKey(cacheInput);
     const cached = await cacheGet(cacheKey);
     if (cached) {
@@ -180,15 +211,10 @@ async function handleAnalyzeRequest(payload, sender) {
     let responseText = await callClaude(prompt, config);
     let result = parseAnalysisJSON(responseText);
 
-    // Track usage for first call
-    await trackUsage(model);
-
-    // Retry once on parse failure
+    // Retry once on parse failure (don't track usage for failed attempt)
     if (!result) {
       responseText = await callClaude(prompt, config);
       result = parseAnalysisJSON(responseText);
-      // Track usage for retry call too
-      await trackUsage(model);
     }
 
     if (!result) {
@@ -197,6 +223,9 @@ async function handleAnalyzeRequest(payload, sender) {
         error: "Unexpected response format. Try switching to Sonnet for more reliable parsing.",
       };
     }
+
+    // Track usage only after successful parse (single count regardless of retry)
+    await trackUsage(model);
 
     // Cache result
     await cacheSet(cacheKey, result, payload.platform, payload.query);
@@ -213,8 +242,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "ANALYZE_REQUEST") {
     const tabId = sender.tab?.id;
     if (!tabId) return false; // No tab to reply to — skip
-    handleAnalyzeRequest(message.payload, sender).then((response) => {
-      chrome.tabs.sendMessage(tabId, response);
+    handleAnalyzeRequest(message.payload).then((response) => {
+      chrome.tabs.sendMessage(tabId, response).catch(() => {
+        // Tab may have closed or navigated away
+      });
+    }).catch((err) => {
+      // Catch any unhandled rejection so loading state doesn't hang
+      chrome.tabs.sendMessage(tabId, {
+        type: "ANALYZE_ERROR",
+        error: err.message || "Analysis failed unexpectedly.",
+      }).catch(() => {});
     });
     return false;
   }
@@ -235,10 +272,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // --- API key validation ---
 
+/**
+ * Validates an API key by sending a minimal request to Anthropic.
+ * Uses a short timeout since this is a quick check.
+ * @param {string} apiKey - The key to validate.
+ * @returns {Promise<{valid: boolean}>}
+ */
 async function validateApiKey(apiKey) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), VALIDATION_TIMEOUT_MS);
+
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
@@ -246,13 +293,15 @@ async function validateApiKey(apiKey) {
         "anthropic-dangerous-direct-browser-access": "true",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: DEFAULT_MODEL,
         max_tokens: 1,
         messages: [{ role: "user", content: "hi" }],
       }),
     });
+    clearTimeout(timeoutId);
     return { valid: response.ok };
   } catch {
+    clearTimeout(timeoutId);
     return { valid: false };
   }
 }

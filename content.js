@@ -21,6 +21,9 @@
   let cachedConfig = null;
   let lastAnalyzedText = null;
   let lastUrl = location.href;
+  let observer = null;
+  let observerDebounceTimer = null;
+  let badgeClickTimer = null;
 
   // --- Platform detection ---
 
@@ -41,17 +44,24 @@
     return cachedConfig;
   }
 
+  /**
+   * Checks if a domain matches any tracked competitor.
+   * Uses exact match or proper subdomain boundary check (dot-separated).
+   */
   function isCompetitorDomain(domain) {
-    if (!cachedConfig?.competitors?.length) return false;
+    if (!domain || !cachedConfig?.competitors?.length) return false;
     const clean = domain.replace(/^www\./, "").toLowerCase();
     return cachedConfig.competitors.some(
-      (c) => clean === c || clean.endsWith("." + c)
+      (c) => clean === c || (clean.endsWith("." + c) && clean.length === c.length + 1 + clean.indexOf("." + c))
     );
   }
 
-  // --- Badge click ---
+  // --- Badge click (debounced to prevent rapid double-clicks) ---
 
   function onBadgeClick() {
+    if (badgeClickTimer) return;
+    badgeClickTimer = setTimeout(() => { badgeClickTimer = null; }, 300);
+
     if (isAnalyzing) return;
     if (analysisResult) {
       overlay.togglePanel();
@@ -91,16 +101,19 @@
         analysisResult._platform = extractedData.platform;
       }
 
-      // Determine badge state based on own domain status
-      if (analysisResult.own_domain_status?.cited) {
+      // Badge state: green if own domain cited, red if competitor cited (and own not),
+      // otherwise neutral success (analysis completed, no tracked domain concern)
+      const ownCited = analysisResult.own_domain_status?.cited;
+      const competitorCited = analysisResult.explicit_citations?.some((c) =>
+        isCompetitorDomain(c.domain)
+      );
+
+      if (ownCited) {
         overlay.setBadgeState("success");
-      } else if (
-        analysisResult.explicit_citations?.some((c) =>
-          isCompetitorDomain(c.domain)
-        )
-      ) {
+      } else if (competitorCited) {
         overlay.setBadgeState("danger");
       } else {
+        // No tracked domain involvement — show success (analysis complete)
         overlay.setBadgeState("success");
       }
 
@@ -138,21 +151,33 @@
     overlay.createBadge(onBadgeClick);
     overlay.setBadgeState("idle");
 
-    let debounceTimer = null;
     const debounceMs = currentPlatform.debounceMs || 500;
 
     // Initial scan
     checkForAIAnswer();
 
-    const observer = new MutationObserver(() => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(checkForAIAnswer, debounceMs);
+    observer = new MutationObserver(() => {
+      clearTimeout(observerDebounceTimer);
+      observerDebounceTimer = setTimeout(checkForAIAnswer, debounceMs);
     });
 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
+
+    // Cleanup on page unload to prevent stale observers
+    window.addEventListener("pagehide", cleanup, { once: true });
+  }
+
+  /** Disconnects observer and clears pending timers. */
+  function cleanup() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    clearTimeout(observerDebounceTimer);
+    observerDebounceTimer = null;
   }
 
   function resetState() {
