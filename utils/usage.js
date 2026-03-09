@@ -10,7 +10,7 @@ const USAGE_KEY = "usage";
 /** Estimated cost per analysis call, by model ID. */
 const COST_PER_ANALYSIS = {
   "claude-haiku-4-5-20251001": 0.006,
-  "claude-sonnet-4-5-20250514": 0.018,
+  "claude-sonnet-4-6": 0.018,
 };
 
 /** @returns {string} Today's date in YYYY-MM-DD format (UTC). */

@@ -311,7 +311,7 @@ async function getCacheKey(text) {
 // Output: ~800 tokens per analysis
 // Haiku 4.5: $1/MTok input, $5/MTok output
 //   → (2000/1M × $1) + (800/1M × $5) = ~$0.006/analysis
-// Sonnet 4.5: $3/MTok input, $15/MTok output
+// Sonnet 4.6: $3/MTok input, $15/MTok output
 //   → (2000/1M × $3) + (800/1M × $15) = ~$0.018/analysis
 
 // Reset when date changes
@@ -351,7 +351,7 @@ The popup is the settings/config interface accessed by clicking the extension ic
 │                                  │
 │  MODEL                           │
 │  ◉ Haiku 4.5  (~$0.006/query)  │
-│  ○ Sonnet 4.5 (~$0.018/query)  │
+│  ○ Sonnet 4.6 (~$0.018/query)  │
 │                                  │
 │  ACTIVATION                      │
 │  ○ Auto (analyze every AI       │
@@ -604,7 +604,7 @@ Rules:
 - User prompt: ~1,500–2,500 tokens (varies with answer length)
 - Output: ~500–1,000 tokens
 - **Haiku 4.5: ~$0.006/analysis**
-- **Sonnet 4.5: ~$0.018/analysis**
+- **Sonnet 4.6: ~$0.018/analysis**
 
 ---
 
