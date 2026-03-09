@@ -493,7 +493,7 @@ function renderResult(data, config, onMinimize, onClose) {
   // Footer
   panel.appendChild(el("div", { class: "bathyal-footer" },
     el("span", { class: "bathyal-footer-text" }, "bathyal.ai"),
-    el("span", { class: "bathyal-footer-text" }, "v0.1.0")
+    el("span", { class: "bathyal-footer-text" }, "v1.0.0")
   ));
 
   return panel;

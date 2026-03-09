@@ -127,11 +127,12 @@
     }
 
     if (message.type === "ANALYZE_SELECTION") {
-      // Right-click context menu: analyze selected text
+      const text = (message.text || "").trim();
+      if (text.length < 20) return; // Too short to analyze meaningfully
       const data = {
         platform: "manual_selection",
         query: "",
-        answer_text: message.text,
+        answer_text: text,
         visible_citations: [],
         page_url: window.location.href,
       };

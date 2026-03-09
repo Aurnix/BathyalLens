@@ -14,7 +14,7 @@ UI mockup (React reference): `docs/BathyalLensMockup.jsx`
 | **Phase 1** | "It works" — end-to-end pipeline | **COMPLETE** |
 | **Phase 2** | "It looks amazing" — Shadow DOM, deep-sea UI, animations | **COMPLETE** |
 | **Phase 3** | "It's configurable" — full popup, caching polish, Perplexity tuning, copy/screenshot | **COMPLETE** |
-| **Phase 4** | "It's public" — prompt tuning, edge cases, icons, README | **NEXT** |
+| **Phase 4** | "It's public" — prompt tuning, edge cases, icons, README | **COMPLETE** |
 
 ## Architecture
 
@@ -145,45 +145,43 @@ Full popup redesign + panel action bar + caching indicator + Perplexity selector
 - Added `[class*="markdown"]` selector for Perplexity's markdown output containers
 - Note: selectors still need live verification against actual Perplexity pages
 
-## What Phase 4 Should Do — "It's Public"
+## What Phase 4 Built (COMPLETE)
 
-**Goal:** Prompt tuning, edge-case hardening, extension icons, README, and Chrome Web Store readiness.
+Public release readiness: prompt tuning, edge-case hardening, icons, README, manifest polish.
 
-### Phase 4 Tasks
+### Prompt Tuning
+- Rewrote system prompt with explicit JSON-only instruction (no fences, no prose)
+- Added concrete examples in the schema to guide Claude's output format
+- Tightened ghost source rules: must show textual evidence, confidence >= 0.6
+- Added explicit_citations rule: domain field must be bare domain, not full URL
+- Required all arrays present even if empty, all numbers must be numbers
+- Added `PROMPT_VERSION` constant (bumped to 2) — stale cache auto-invalidated
 
-1. **Prompt tuning** — Review and refine the Claude analysis prompt in `background.js` for accuracy. Test against diverse queries and AI answer styles. Ensure JSON output is consistently well-structured.
+### Edge-Case Hardening
+- **Answer truncation**: `MAX_ANSWER_CHARS = 12000` — long answers truncated with note to Claude
+- **Empty payload validation**: Rejects answers < 20 chars before API call
+- **Selection validation**: Context menu ignores selections < 20 chars
+- **Result normalization**: `normalizeResult()` ensures all fields exist with safe types/defaults after parse
+  - Coerces `count` to number, clamps `confidence` to 0–1, validates enum values
+  - Filters ghost sources below 0.6 confidence
+  - Caps citation_dna at 4 entries
+  - Guarantees `stats` object with numeric defaults
 
-2. **Google AI Overview tuning** — Live test `platforms/google.js` selectors against actual Google search pages with AI Overviews. Adjust `detect()` and `extract()` as needed. Google frequently changes their DOM structure.
+### Extension Icons
+- Generated programmatic sonar-themed icons at 16×16, 32×32, 48×48, 128×128
+- Deep navy background with concentric teal rings matching the badge SVG aesthetic
+- Added 32×32 size (previously missing)
 
-3. **Perplexity live testing** — Verify Phase 3's selector changes work against real Perplexity pages. Further adjust if needed.
+### Manifest Polish
+- Version bumped to `1.0.0`
+- Expanded description for Chrome Web Store
+- Added 32×32 icon reference
+- Version updated in popup footer and overlay footer
 
-4. **Edge-case hardening** — Handle gracefully:
-   - Empty/malformed API responses
-   - Very long answers (token limits)
-   - Pages with no AI answer detected
-   - Rate limiting / API errors
-   - Multiple rapid analyses
-
-5. **Extension icons** — Create proper icon set (16×16, 32×32, 48×48, 128×128) for manifest + Chrome Web Store. Deep-sea sonar theme matching the badge SVG.
-
-6. **README** — User-facing documentation: what it does, installation, BYOK setup, supported platforms, screenshots.
-
-7. **Manifest polish** — Description, version bump, permissions audit, store listing metadata.
-
-### Key Files to Modify in Phase 4
-- `background.js` — Prompt refinement, error handling improvements
-- `platforms/google.js` — Selector tuning after live testing
-- `platforms/perplexity.js` — Further selector tuning
-- `manifest.json` — Icons, description, version, permissions
-- `README.md` — New file, user-facing docs
-- `icons/` — New directory for extension icons
-
-### What NOT to Touch in Phase 4
-- `overlay/` — UI layer is complete (Phases 2+3)
-- `popup/` — Settings UI is complete (Phase 3)
-- `utils/` — Utility layer is stable
-- Shadow DOM architecture — Keep the closed shadow root pattern
-- Message protocol — Don't change the message format
+### README
+- Full user-facing documentation: what it does, who it's for, installation, BYOK setup
+- Architecture overview, privacy statement, cost table
+- Development instructions (no build step)
 
 ## Development Notes
 

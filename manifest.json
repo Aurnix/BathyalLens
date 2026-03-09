@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Bathyal Lens",
-  "version": "0.1.0",
-  "description": "See beneath the surface. Analyze AI-generated answers in real-time.",
+  "version": "1.0.0",
+  "description": "See beneath the surface. BYOK Chrome extension that analyzes AI-generated answers — revealing citation patterns, ghost sources, and structural insights using your own Claude API key.",
   "permissions": [
     "storage",
     "activeTab",
@@ -41,12 +41,14 @@
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/bathyal-16.png",
+      "32": "icons/bathyal-32.png",
       "48": "icons/bathyal-48.png",
       "128": "icons/bathyal-128.png"
     }
   },
   "icons": {
     "16": "icons/bathyal-16.png",
+    "32": "icons/bathyal-32.png",
     "48": "icons/bathyal-48.png",
     "128": "icons/bathyal-128.png"
   }
