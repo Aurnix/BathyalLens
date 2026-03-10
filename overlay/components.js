@@ -32,7 +32,7 @@ function el(tag, attrs, ...children) {
 
 /** Coerces a value to a safe display string. Returns "" for nullish/falsy values. */
 function toDisplayStr(str) {
-  if (!str) return "";
+  if (str == null) return "";
   return String(str);
 }
 
@@ -308,7 +308,9 @@ function renderResult(data, config, onMinimize, onClose) {
           try {
             const url = new URL(`https://${domain}`);
             window.open(url.href, "_blank");
-          } catch {}
+          } catch {
+            console.warn("[BathyalLens] Could not open domain:", domain);
+          }
         });
 
         rows.appendChild(el("div", { class: "bathyal-cite-row" },
@@ -332,12 +334,12 @@ function renderResult(data, config, onMinimize, onClose) {
         for (const comp of competitors) {
           const normComp = comp.replace(/^www\./, "").toLowerCase();
           const cited = citations.find(c => {
-            const d = (c.domain || "").replace(/^www\./, "").toLowerCase();
-            return d === normComp || d.endsWith("." + normComp);
+            const cd = (c.domain || "").replace(/^www\./, "").toLowerCase();
+            return cd === normComp || cd.endsWith("." + normComp);
           });
           const ghost = (d.ghost_sources || []).find(g => {
-            const d = (g.domain || "").replace(/^www\./, "").toLowerCase();
-            return d === normComp || d.endsWith("." + normComp);
+            const gd = (g.domain || "").replace(/^www\./, "").toLowerCase();
+            return gd === normComp || gd.endsWith("." + normComp);
           });
           let icon, color, label;
           if (cited) {
@@ -400,8 +402,8 @@ function renderResult(data, config, onMinimize, onClose) {
             el("span", { class: "bathyal-dna-icon" }, "\u2726"),
             el("span", { class: "bathyal-dna-pattern" }, toDisplayStr((item.pattern || "").replace(/_/g, " "))),
             el("span", {
-              class: `bathyal-dna-strength bathyal-dna-strength--${item.strength}`
-            }, item.strength)
+              class: `bathyal-dna-strength bathyal-dna-strength--${["strong", "moderate", "weak"].includes(item.strength) ? item.strength : "moderate"}`
+            }, item.strength || "moderate")
           ),
           el("div", { class: "bathyal-dna-desc" }, toDisplayStr(item.description))
         ));

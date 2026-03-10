@@ -61,12 +61,8 @@
       const href = a.href;
       if (!href) return;
       try {
-        const parsedHref = new URL(href);
-        if (parsedHref.hostname.includes("perplexity.ai")) return;
-      } catch { return; }
-
-      try {
         const url = new URL(href);
+        if (url.hostname.includes("perplexity.ai")) return;
         const domain = url.hostname.replace(/^www\./, "");
         const key = domain + url.pathname;
         if (seen.has(key)) return;
@@ -76,8 +72,8 @@
           url: href,
           anchor_text: a.textContent.trim() || domain,
         });
-      } catch (e) {
-        console.warn("[BathyalLens] Skipping unparseable URL:", href, e);
+      } catch {
+        // Skip unparseable URLs
       }
     }
 
@@ -107,7 +103,7 @@
 
     // Query: try URL path, then search input
     let query = "";
-    const pathMatch = window.location.pathname.match(/\/search\/(.+)/);
+    const pathMatch = window.location.pathname.match(/\/search\/([^/]+)/);
     if (pathMatch) {
       try {
         query = decodeURIComponent(pathMatch[1].replace(/\+/g, " "));

@@ -21,6 +21,12 @@
   function ensureShadowRoot() {
     if (shadowRoot) return shadowRoot;
 
+    // Check for existing host element (e.g. from re-injection on SPA navigation)
+    const existing = document.getElementById("bathyal-lens-root");
+    if (existing) {
+      existing.remove();
+    }
+
     hostEl = document.createElement("div");
     hostEl.id = "bathyal-lens-root";
     // Prevent host page styles from affecting our container
@@ -107,7 +113,17 @@
     // Capture reference to avoid stale closure if showPanel() replaces panelEl mid-animation
     const currentPanel = panelEl;
     currentPanel.classList.add("bathyal-panel--closing");
+
+    // Fallback timeout in case animationend doesn't fire (e.g. tab inactive, animation removed)
+    const fallbackTimer = setTimeout(() => {
+      if (panelEl === currentPanel) {
+        currentPanel.style.display = "none";
+        currentPanel.classList.remove("bathyal-panel--closing");
+      }
+    }, 300);
+
     currentPanel.addEventListener("animationend", () => {
+      clearTimeout(fallbackTimer);
       // Only act if this is still the active panel
       if (panelEl === currentPanel) {
         currentPanel.style.display = "none";

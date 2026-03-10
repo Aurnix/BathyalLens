@@ -243,7 +243,7 @@ function normalizeResult(raw) {
           strength: ["strong", "moderate", "weak"].includes(d.strength) ? d.strength : "moderate",
         }))
       : [],
-    own_domain_status: raw.own_domain_status
+    own_domain_status: (raw.own_domain_status && typeof raw.own_domain_status === "object")
       ? {
           cited: raw.own_domain_status.cited === null ? null : Boolean(raw.own_domain_status.cited),
           ghost: raw.own_domain_status.ghost === null ? null : Boolean(raw.own_domain_status.ghost),
