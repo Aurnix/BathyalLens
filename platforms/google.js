@@ -38,7 +38,9 @@
     for (const h of headings) {
       if (h.textContent.trim() === "AI Overview") {
         const container = h.closest("div[data-attrid]") || h.parentElement?.parentElement;
-        if (container && container.innerText.trim().length > MIN_ANSWER_LENGTH) return container;
+        // Guard against grabbing a too-large ancestor (e.g. body or main)
+        if (container && container !== document.body && container.tagName !== "MAIN"
+            && container.innerText.trim().length > MIN_ANSWER_LENGTH) return container;
       }
     }
 

@@ -12,10 +12,15 @@
   "use strict";
 
   const overlay = window.BathyalOverlay;
+  if (!overlay) {
+    console.warn("[BathyalLens] Overlay modules failed to load. Extension will not function.");
+    return;
+  }
 
   // --- State ---
   let currentPlatform = null;
   let extractedData = null;
+  let pendingExtractedData = null; // snapshot at time of analysis request
   let analysisResult = null;
   let isAnalyzing = false;
   let cachedConfig = null;
@@ -78,6 +83,7 @@
     if (isAnalyzing) return;
     isAnalyzing = true;
     lastAnalyzedText = data.answer_text;
+    pendingExtractedData = data; // snapshot so result gets correct metadata
     overlay.setBadgeState("loading");
     overlay.showPanel("loading");
 
@@ -94,12 +100,14 @@
       isAnalyzing = false;
       analysisResult = message.payload;
 
-      // Attach metadata for the panel
+      // Attach metadata for the panel (use snapshot from time of request, not current)
       analysisResult._cached = message.cached || false;
-      if (extractedData) {
-        analysisResult._query = extractedData.query;
-        analysisResult._platform = extractedData.platform;
+      const sourceData = pendingExtractedData || extractedData;
+      if (sourceData) {
+        analysisResult._query = sourceData.query;
+        analysisResult._platform = sourceData.platform;
       }
+      pendingExtractedData = null;
 
       // Badge state: green if own domain cited, red if competitor cited (and own not),
       // otherwise neutral success (analysis completed, no tracked domain concern)

@@ -63,9 +63,11 @@ toggleKeyBtn.addEventListener("click", () => {
   if (apiKeyInput.type === "password") {
     apiKeyInput.type = "text";
     toggleKeyBtn.textContent = "Hide";
+    toggleKeyBtn.setAttribute("aria-label", "Hide API key");
   } else {
     apiKeyInput.type = "password";
     toggleKeyBtn.textContent = "Show";
+    toggleKeyBtn.setAttribute("aria-label", "Show API key");
   }
 });
 
@@ -80,7 +82,9 @@ saveKeyBtn.addEventListener("click", async () => {
   saveKeyBtn.disabled = true;
 
   // Timeout guard — re-enable button if validation never responds
+  let timedOut = false;
   const timeoutId = setTimeout(() => {
+    timedOut = true;
     saveKeyBtn.disabled = false;
     showStatus("Validation timed out. Check your network and retry.", "error");
   }, VALIDATION_TIMEOUT_MS);
@@ -91,6 +95,9 @@ saveKeyBtn.addEventListener("click", async () => {
       apiKey: key,
     });
     clearTimeout(timeoutId);
+
+    // Ignore late response if we already showed a timeout error
+    if (timedOut) return;
 
     if (result && result.valid) {
       config.apiKey = key;
@@ -107,6 +114,7 @@ saveKeyBtn.addEventListener("click", async () => {
     }
   } catch (err) {
     clearTimeout(timeoutId);
+    if (timedOut) return;
     showStatus("Validation failed. Key not saved — check network and retry.", "error");
   }
 
@@ -180,6 +188,8 @@ addCompetitorBtn.addEventListener("click", () => {
 
   if (!isValidDomain(domain)) {
     addCompetitorInput.value = "";
+    addCompetitorInput.placeholder = "Invalid domain format";
+    setTimeout(() => { addCompetitorInput.placeholder = "competitor.com"; }, 2000);
     return;
   }
 
@@ -202,7 +212,15 @@ document.querySelectorAll('input[name="model"], input[name="activation"]').forEa
   radio.addEventListener("change", saveConfig);
 });
 
-ownDomainInput.addEventListener("change", saveConfig);
+ownDomainInput.addEventListener("change", () => {
+  const cleaned = cleanDomain(ownDomainInput.value);
+  if (cleaned && !isValidDomain(cleaned)) {
+    ownDomainInput.value = "";
+    ownDomainInput.placeholder = "Invalid domain format";
+    setTimeout(() => { ownDomainInput.placeholder = "example.com"; }, 2000);
+  }
+  saveConfig();
+});
 // Debounce keystroke saves to avoid storage thrashing
 ownDomainInput.addEventListener("input", () => {
   clearTimeout(domainSaveTimer);
