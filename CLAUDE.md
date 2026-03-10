@@ -122,7 +122,7 @@ Full popup redesign + panel action bar + caching indicator + Perplexity selector
 
 ### Popup Overhaul
 - **popup.css** — Full restyle with `--bathyal-*` CSS variables (matching overlay). Card-based sections with colored left-accent borders (cyan=key, blue=domain, amber=competitors). Pill-style radio selectors with `:has(input:checked)` highlighting. Input focus glows. Staggered `bathyal-fade-in` animation on cards. Stats-row usage display.
-- **popup.html** — Sonar SVG icon in header. Each settings group wrapped in `.popup-card` with `.popup-card-label`. Horizontal pill radio groups for model + activation. Usage shown as centered stat blocks (count + cost). Version in footer: `v0.1.0 · bathyal.ai`.
+- **popup.html** — Sonar SVG icon in header. Each settings group wrapped in `.popup-card` with `.popup-card-label`. Horizontal pill radio groups for model + activation. Usage shown as centered stat blocks (count + cost). Version in footer: `v1.0.6 · bathyal.ai`.
 - **popup.js** — Added `input` event listener on `ownDomainInput` (saves on each keystroke, not just blur). Save button shows "Saved" with green `.popup-btn--saved` class for 1.5s after successful validation.
 
 ### Action Bar (in result panel)
@@ -173,7 +173,7 @@ Public release readiness: prompt tuning, edge-case hardening, icons, README, man
 - Added 32×32 size (previously missing)
 
 ### Manifest Polish
-- Version bumped to `1.0.0`
+- Version bumped to `1.0.6`
 - Expanded description for Chrome Web Store
 - Added 32×32 icon reference
 - Version updated in popup footer and overlay footer
@@ -183,9 +183,53 @@ Public release readiness: prompt tuning, edge-case hardening, icons, README, man
 - Architecture overview, privacy statement, cost table
 - Development instructions (no build step)
 
+## What v1.0.6 Fixed (Code Review)
+
+Comprehensive code review — 15 bugs fixed across 7 files.
+
+### Critical Fixes
+- **panel.js**: Prevent duplicate Shadow DOM host on content script re-injection (checks for existing `#bathyal-lens-root`)
+- **panel.js**: Add fallback timeout for `animationend` in `hidePanel` (fires after 300ms if event never comes)
+- **content.js**: Fix race condition — `extractedData` could be overwritten during in-flight analysis, causing mismatched query/platform metadata. Now snapshots data at request time via `pendingExtractedData`.
+- **content.js**: Add null guard for `window.BathyalOverlay` — exits early with warning if overlay scripts fail to load
+- **background.js**: Fix `normalizeResult` crash when `own_domain_status` is `null` (not an object) — added `typeof === "object"` check
+- **popup.js**: Fix timeout/response race in API key validation — late response no longer overwrites timeout error message
+
+### Moderate Fixes
+- **components.js**: Fix variable shadowing — inner `const d` in competitor `find()` callbacks shadowed outer `const d = data`; renamed to `cd`/`gd`
+- **components.js**: Fix `toDisplayStr` returning empty string for falsy numeric values like `0` — changed `!str` to `str == null`
+- **components.js**: Handle unrecognized DNA strength values with fallback to `"moderate"` (prevents invisible text)
+- **components.js**: Log warning on domain click URL construction failure (was empty `catch {}`)
+- **popup.js**: Add own domain validation on input change (matching competitor validation behavior)
+- **popup.js**: Show "Invalid domain format" placeholder when invalid competitor domain is entered
+- **popup.js**: Update `aria-label` when toggling API key visibility
+- **perplexity.js**: Fix query regex — `/\/search\/(.+)/` captured trailing path segments; changed to `/\/search\/([^/]+)/`
+- **perplexity.js**: Eliminate redundant double `new URL()` parse in `processLink`
+- **google.js**: Guard heading fallback against grabbing `<body>` or `<main>` as container
+
+### Known Issues (Design-Level, Not Fixed)
+- Storage race conditions in `cache.js` and `usage.js` (read-modify-write without locking) — would need architectural change
+- Service worker termination risk for long API calls (>30s) — would need keep-alive mechanism
+- No client-side rate limiting on analysis requests — rapid re-renders could cause billing spikes
+- `host_permissions` only covers `.com` Google domain, but content scripts match 14 regional domains
+
 ## Development Notes
 
 - **No build system.** Plain vanilla JS. Chrome loads files directly from the extension directory.
 - **Manifest V3.** Service worker uses `"type": "module"` for ES imports.
 - **Content scripts** share a single execution context. Platform + overlay modules use IIFE + namespace pattern.
 - **Test by loading unpacked** in `chrome://extensions` (developer mode). After code changes, click the refresh button on the extension card.
+
+## Versioning
+
+**Current version: `1.0.6`**
+
+Version must be updated in **3 places** whenever it changes:
+
+| File | Location | Format |
+|------|----------|--------|
+| `manifest.json` | `"version"` field (line 4) | `"1.0.6"` |
+| `popup/popup.html` | Footer text (line 91) | `v1.0.6 &middot; bathyal.ai` |
+| `overlay/components.js` | `renderResult` footer (search for `bathyal-footer-text`) | `"v1.0.6"` |
+
+**When bumping the version:** Update all 3 locations, then update `CLAUDE.md` (this section + any changelog entry). If the prompt template in `background.js` changes, also bump `PROMPT_VERSION` to invalidate stale caches.
